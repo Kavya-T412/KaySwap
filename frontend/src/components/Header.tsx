@@ -1,6 +1,6 @@
 import React from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { ShieldAlert, KeyRound, RefreshCw } from 'lucide-react';
+import { ShieldAlert, KeyRound, RefreshCw, History } from 'lucide-react';
 import logoImg from '../KaySwap.png';
 
 interface HeaderProps {
@@ -9,6 +9,9 @@ interface HeaderProps {
   onSignIn: () => void;
   isSigning: boolean;
   onLogoClick: () => void;
+  txCount: number;
+  pendingCount: number;
+  onOpenHistory: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -17,6 +20,9 @@ export const Header: React.FC<HeaderProps> = ({
   onSignIn,
   isSigning,
   onLogoClick,
+  txCount,
+  pendingCount,
+  onOpenHistory,
 }) => {
   return (
     <header className="sharp-card" style={{ padding: '16px 24px', marginBottom: '32px' }}>
@@ -48,8 +54,43 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Status Bar & Wallet Connect */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+        {/* Status Bar, Transaction History & Wallet Connect */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          {/* History Button with Badge */}
+          <button
+            className="sharp-button-outline"
+            onClick={onOpenHistory}
+            title="View Transaction History"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '0.85rem',
+              padding: '8px 12px',
+              borderColor: '#450C3F',
+              backgroundColor: '#ffffff',
+              color: '#450C3F',
+            }}
+          >
+            <History size={16} />
+            <span>TRANSACTIONS</span>
+            {txCount > 0 && (
+              <span
+                style={{
+                  backgroundColor: pendingCount > 0 ? '#b06000' : '#165823',
+                  color: '#ffffff',
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  padding: '2px 6px',
+                  borderRadius: '2px',
+                  marginLeft: '2px',
+                }}
+              >
+                {pendingCount > 0 ? `${pendingCount} PENDING` : txCount}
+              </span>
+            )}
+          </button>
+
           {/* SIWE Session Action - Differentiates New User vs Expired User */}
           {!isAuthenticated && (
             <button
@@ -91,3 +132,4 @@ export const Header: React.FC<HeaderProps> = ({
     </header>
   );
 };
+

@@ -7,6 +7,7 @@ import { SIWEBanner } from './components/SIWEBanner';
 import { SwapCard } from './components/SwapCard';
 import { LiquidityCard } from './components/LiquidityCard';
 import { TokenomicsCard } from './components/TokenomicsCard';
+import { TransactionModal } from './components/TransactionModal';
 import { KAVYA_TOKEN_ADDRESS, KAYSWAP_AMM_ADDRESS } from './config/contracts';
 import { useAccount } from 'wagmi';
 
@@ -17,15 +18,20 @@ export function App() {
   const { isAuthenticated, isSessionExpired, signIn, isSigning } = useSiwe();
   const kaySwap = useKaySwap();
 
+  const pendingCount = kaySwap.transactions.filter((tx) => tx.status === 'pending').length;
+
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px 16px', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Header Bar with Logo Click Handler */}
+      {/* Header Bar with Logo Click Handler & Transaction Modal Trigger */}
       <Header
         isAuthenticated={isAuthenticated}
         isSessionExpired={isSessionExpired}
         onSignIn={signIn}
         isSigning={isSigning}
         onLogoClick={() => setActiveNav('swap')}
+        txCount={kaySwap.transactions.length}
+        pendingCount={pendingCount}
+        onOpenHistory={() => kaySwap.setIsTxModalOpen(true)}
       />
 
       {/* SIWE Session Banner when wallet connected but unauthenticated or session expired */}
@@ -84,6 +90,14 @@ export function App() {
         )}
       </main>
 
+      {/* Transaction History Modal */}
+      <TransactionModal
+        isOpen={kaySwap.isTxModalOpen}
+        onClose={() => kaySwap.setIsTxModalOpen(false)}
+        transactions={kaySwap.transactions}
+        onClearHistory={kaySwap.clearTransactions}
+      />
+
       {/* Footer Info */}
       <footer
         className="sharp-card"
@@ -126,3 +140,4 @@ export function App() {
 }
 
 export default App;
+

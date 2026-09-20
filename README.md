@@ -51,15 +51,7 @@ The smart contracts are deployed and verified on the **Sepolia Testnet**:
 
 ---
 
-## 🎨 Design System & Color Palette
 
-KaySwap implements a crisp, sharp-edged UI (`border-radius: 0px`) with bold 2px/3px borders and offset box-shadows (`4px 4px 0px #450C3F`), using the following color hierarchy:
-
-- `#FCECD8`: Base Background (Warm Cream / Sand)
-- `#450C3F`: Primary Accent / Text / Sharp Card Borders (Deep Plum)
-- `#165823`: Secondary Accent / Highlights / Green Badges (Deep Emerald Green)
-
----
 
 ## 🚀 Getting Started for Developers
 

@@ -3,6 +3,16 @@ import { useAccount } from 'wagmi';
 import { BrowserProvider, Contract, formatEther, parseEther } from 'ethers';
 import { KAVYA_TOKEN_ADDRESS, KAYSWAP_AMM_ADDRESS, KAVYA_TOKEN_ABI, KAYSWAP_AMM_ABI } from '../config/contracts';
 
+export interface TransactionItem {
+  id: string;
+  type: 'SWAP_KAV_ETH' | 'SWAP_ETH_KAV' | 'ADD_LIQUIDITY' | 'REMOVE_LIQUIDITY' | 'CLAIM_FAUCET' | 'APPROVE' | 'MINT';
+  summary: string;
+  status: 'pending' | 'success' | 'failed';
+  hash?: string;
+  timestamp: number;
+  error?: string;
+}
+
 export function useKaySwap() {
   const { address, isConnected } = useAccount();
 
@@ -23,6 +33,69 @@ export function useKaySwap() {
   const [txPending, setTxPending] = useState<boolean>(false);
   const [txHash, setTxHash] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Transaction History State & Modal Toggle
+  const [transactions, setTransactions] = useState<TransactionItem[]>([]);
+  const [isTxModalOpen, setIsTxModalOpen] = useState<boolean>(false);
+
+  // Load transactions from localStorage for connected wallet
+  useEffect(() => {
+    if (address) {
+      try {
+        const stored = localStorage.getItem(`kayswap_txs_${address.toLowerCase()}`);
+        if (stored) {
+          setTransactions(JSON.parse(stored));
+        } else {
+          setTransactions([]);
+        }
+      } catch (e) {
+        console.error('Failed to load transaction history', e);
+      }
+    } else {
+      setTransactions([]);
+    }
+  }, [address]);
+
+  // Helper to persist transaction history
+  const saveTransactions = (txs: TransactionItem[]) => {
+    setTransactions(txs);
+    if (address) {
+      try {
+        localStorage.setItem(`kayswap_txs_${address.toLowerCase()}`, JSON.stringify(txs));
+      } catch (e) {
+        console.error('Failed to save transaction history', e);
+      }
+    }
+  };
+
+  const addTransactionRecord = (type: TransactionItem['type'], summary: string): string => {
+    const id = `${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const newTx: TransactionItem = {
+      id,
+      type,
+      summary,
+      status: 'pending',
+      timestamp: Date.now(),
+    };
+    saveTransactions([newTx, ...transactions]);
+    return id;
+  };
+
+  const updateTransactionRecord = (id: string, updates: Partial<TransactionItem>) => {
+    setTransactions((prev) => {
+      const updated = prev.map((item) => (item.id === id ? { ...item, ...updates } : item));
+      if (address) {
+        try {
+          localStorage.setItem(`kayswap_txs_${address.toLowerCase()}`, JSON.stringify(updated));
+        } catch (e) {}
+      }
+      return updated;
+    });
+  };
+
+  const clearTransactions = () => {
+    saveTransactions([]);
+  };
 
   // Helper to get ethers provider/signer
   const getEthersSigner = async () => {
@@ -123,17 +196,22 @@ export function useKaySwap() {
     setTxPending(true);
     setError(null);
     setTxHash(null);
+    const recordId = addTransactionRecord('APPROVE', `Approve ${amount} KAV`);
     try {
       const signer = await getEthersSigner();
       const kavContract = new Contract(KAVYA_TOKEN_ADDRESS, KAVYA_TOKEN_ABI, signer);
       const tx = await kavContract.approve(KAYSWAP_AMM_ADDRESS, parseEther(amount));
       setTxHash(tx.hash);
+      updateTransactionRecord(recordId, { hash: tx.hash });
       await tx.wait();
+      updateTransactionRecord(recordId, { status: 'success' });
       await refreshData();
       return true;
     } catch (err: any) {
       console.error('Approve failed:', err);
-      setError(err?.reason || err?.message || 'Approval failed');
+      const errMsg = err?.reason || err?.message || 'Approval failed';
+      setError(errMsg);
+      updateTransactionRecord(recordId, { status: 'failed', error: errMsg });
       return false;
     } finally {
       setTxPending(false);
@@ -144,6 +222,7 @@ export function useKaySwap() {
     setTxPending(true);
     setError(null);
     setTxHash(null);
+    const recordId = addTransactionRecord('SWAP_KAV_ETH', `Swap ${amountKav} KAV for ~${minEthOut} ETH`);
     try {
       const signer = await getEthersSigner();
       const ammContract = new Contract(KAYSWAP_AMM_ADDRESS, KAYSWAP_AMM_ABI, signer);
@@ -152,12 +231,16 @@ export function useKaySwap() {
 
       const tx = await ammContract.swapKAVForETH(kavIn, ethMin);
       setTxHash(tx.hash);
+      updateTransactionRecord(recordId, { hash: tx.hash });
       await tx.wait();
+      updateTransactionRecord(recordId, { status: 'success' });
       await refreshData();
       return true;
     } catch (err: any) {
       console.error('Swap KAV->ETH failed:', err);
-      setError(err?.reason || err?.message || 'Swap failed');
+      const errMsg = err?.reason || err?.message || 'Swap failed';
+      setError(errMsg);
+      updateTransactionRecord(recordId, { status: 'failed', error: errMsg });
       return false;
     } finally {
       setTxPending(false);
@@ -168,6 +251,7 @@ export function useKaySwap() {
     setTxPending(true);
     setError(null);
     setTxHash(null);
+    const recordId = addTransactionRecord('SWAP_ETH_KAV', `Swap ${amountEth} ETH for ~${minKavOut} KAV`);
     try {
       const signer = await getEthersSigner();
       const ammContract = new Contract(KAYSWAP_AMM_ADDRESS, KAYSWAP_AMM_ABI, signer);
@@ -175,12 +259,16 @@ export function useKaySwap() {
 
       const tx = await ammContract.swapETHForKAV(kavMin, { value: parseEther(amountEth) });
       setTxHash(tx.hash);
+      updateTransactionRecord(recordId, { hash: tx.hash });
       await tx.wait();
+      updateTransactionRecord(recordId, { status: 'success' });
       await refreshData();
       return true;
     } catch (err: any) {
       console.error('Swap ETH->KAV failed:', err);
-      setError(err?.reason || err?.message || 'Swap failed');
+      const errMsg = err?.reason || err?.message || 'Swap failed';
+      setError(errMsg);
+      updateTransactionRecord(recordId, { status: 'failed', error: errMsg });
       return false;
     } finally {
       setTxPending(false);
@@ -191,6 +279,7 @@ export function useKaySwap() {
     setTxPending(true);
     setError(null);
     setTxHash(null);
+    const recordId = addTransactionRecord('ADD_LIQUIDITY', `Add Liquidity (${amountKav} KAV + ${amountEth} ETH)`);
     try {
       const signer = await getEthersSigner();
       const ammContract = new Contract(KAYSWAP_AMM_ADDRESS, KAYSWAP_AMM_ABI, signer);
@@ -199,12 +288,16 @@ export function useKaySwap() {
 
       const tx = await ammContract.addLiquidity(kavBig, { value: ethBig });
       setTxHash(tx.hash);
+      updateTransactionRecord(recordId, { hash: tx.hash });
       await tx.wait();
+      updateTransactionRecord(recordId, { status: 'success' });
       await refreshData();
       return true;
     } catch (err: any) {
       console.error('Add Liquidity failed:', err);
-      setError(err?.reason || err?.message || 'Add Liquidity failed');
+      const errMsg = err?.reason || err?.message || 'Add Liquidity failed';
+      setError(errMsg);
+      updateTransactionRecord(recordId, { status: 'failed', error: errMsg });
       return false;
     } finally {
       setTxPending(false);
@@ -215,6 +308,7 @@ export function useKaySwap() {
     setTxPending(true);
     setError(null);
     setTxHash(null);
+    const recordId = addTransactionRecord('REMOVE_LIQUIDITY', `Remove ${amountLp} LP Tokens Liquidity`);
     try {
       const signer = await getEthersSigner();
       const ammContract = new Contract(KAYSWAP_AMM_ADDRESS, KAYSWAP_AMM_ABI, signer);
@@ -222,12 +316,16 @@ export function useKaySwap() {
 
       const tx = await ammContract.removeLiquidity(lpBig);
       setTxHash(tx.hash);
+      updateTransactionRecord(recordId, { hash: tx.hash });
       await tx.wait();
+      updateTransactionRecord(recordId, { status: 'success' });
       await refreshData();
       return true;
     } catch (err: any) {
       console.error('Remove Liquidity failed:', err);
-      setError(err?.reason || err?.message || 'Remove Liquidity failed');
+      const errMsg = err?.reason || err?.message || 'Remove Liquidity failed';
+      setError(errMsg);
+      updateTransactionRecord(recordId, { status: 'failed', error: errMsg });
       return false;
     } finally {
       setTxPending(false);
@@ -238,17 +336,22 @@ export function useKaySwap() {
     setTxPending(true);
     setError(null);
     setTxHash(null);
+    const recordId = addTransactionRecord('CLAIM_FAUCET', `Claim 100 Faucet KAV Tokens`);
     try {
       const signer = await getEthersSigner();
       const kavContract = new Contract(KAVYA_TOKEN_ADDRESS, KAVYA_TOKEN_ABI, signer);
       const tx = await kavContract.claimFaucet();
       setTxHash(tx.hash);
+      updateTransactionRecord(recordId, { hash: tx.hash });
       await tx.wait();
+      updateTransactionRecord(recordId, { status: 'success' });
       await refreshData();
       return true;
     } catch (err: any) {
       console.error('Faucet claim failed:', err);
-      setError(err?.reason || err?.message || 'Faucet claim failed');
+      const errMsg = err?.reason || err?.message || 'Faucet claim failed';
+      setError(errMsg);
+      updateTransactionRecord(recordId, { status: 'failed', error: errMsg });
       return false;
     } finally {
       setTxPending(false);
@@ -259,17 +362,22 @@ export function useKaySwap() {
     setTxPending(true);
     setError(null);
     setTxHash(null);
+    const recordId = addTransactionRecord('MINT', `Mint ${amount} KAV to ${recipient.slice(0, 6)}...`);
     try {
       const signer = await getEthersSigner();
       const kavContract = new Contract(KAVYA_TOKEN_ADDRESS, KAVYA_TOKEN_ABI, signer);
       const tx = await kavContract.mint(recipient, parseEther(amount));
       setTxHash(tx.hash);
+      updateTransactionRecord(recordId, { hash: tx.hash });
       await tx.wait();
+      updateTransactionRecord(recordId, { status: 'success' });
       await refreshData();
       return true;
     } catch (err: any) {
       console.error('Minting failed:', err);
-      setError(err?.reason || err?.message || 'Minting failed');
+      const errMsg = err?.reason || err?.message || 'Minting failed';
+      setError(errMsg);
+      updateTransactionRecord(recordId, { status: 'failed', error: errMsg });
       return false;
     } finally {
       setTxPending(false);
@@ -291,6 +399,10 @@ export function useKaySwap() {
     txPending,
     txHash,
     error,
+    transactions,
+    isTxModalOpen,
+    setIsTxModalOpen,
+    clearTransactions,
     refreshData,
     getSwapQuote,
     approveKav,
@@ -302,3 +414,4 @@ export function useKaySwap() {
     mintTokens,
   };
 }
+
