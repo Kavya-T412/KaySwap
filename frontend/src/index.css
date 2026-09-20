@@ -1,0 +1,238 @@
+@import '@rainbow-me/rainbowkit/styles.css';
+
+:root {
+  --bg-primary: #FCECD8;
+  --color-plum: #450C3F;
+  --color-emerald: #165823;
+  --color-plum-light: #5d1355;
+  --color-plum-subtle: rgba(69, 12, 63, 0.08);
+  --color-emerald-light: #1e7530;
+  --color-emerald-bg: rgba(22, 88, 35, 0.1);
+  --color-white: #ffffff;
+  --font-main: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Space Mono', monospace;
+  --shadow-sharp: 4px 4px 0px #450C3F;
+  --shadow-sharp-sm: 2px 2px 0px #450C3F;
+  --shadow-sharp-lg: 6px 6px 0px #450C3F;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--color-plum);
+  font-family: var(--font-main);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Sharp Edges Rule */
+button, input, select, textarea, div, article, section, nav, header, footer {
+  border-radius: 0px !important;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+  border-left: 2px solid var(--color-plum);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-plum);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-emerald);
+}
+
+/* Typography & Utilities */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-plum);
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+/* Sharp Card Base */
+.sharp-card {
+  background: var(--color-white);
+  border: 3px solid var(--color-plum);
+  box-shadow: var(--shadow-sharp);
+  padding: 24px;
+  position: relative;
+}
+
+.sharp-card-sm {
+  background: var(--color-white);
+  border: 2px solid var(--color-plum);
+  box-shadow: var(--shadow-sharp-sm);
+  padding: 16px;
+}
+
+.sharp-button-primary {
+  background-color: var(--color-plum);
+  color: #ffffff;
+  border: 2px solid var(--color-plum);
+  box-shadow: var(--shadow-sharp-sm);
+  padding: 12px 20px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sharp-button-primary:hover:not(:disabled) {
+  background-color: var(--color-plum-light);
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-sharp);
+}
+
+.sharp-button-primary:active:not(:disabled) {
+  transform: translate(0px, 0px);
+  box-shadow: 0px 0px 0px #450C3F;
+}
+
+.sharp-button-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.sharp-button-secondary {
+  background-color: var(--color-emerald);
+  color: #ffffff;
+  border: 2px solid var(--color-plum);
+  box-shadow: var(--shadow-sharp-sm);
+  padding: 12px 20px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-transform: uppercase;
+}
+
+.sharp-button-secondary:hover:not(:disabled) {
+  background-color: var(--color-emerald-light);
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-sharp);
+}
+
+.sharp-button-outline {
+  background-color: transparent;
+  color: var(--color-plum);
+  border: 2px solid var(--color-plum);
+  padding: 10px 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sharp-button-outline:hover {
+  background-color: var(--color-plum);
+  color: #ffffff;
+}
+
+/* Sharp Input Fields */
+.sharp-input-box {
+  background-color: var(--bg-primary);
+  border: 2px solid var(--color-plum);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sharp-input-box input {
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--font-mono);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--color-plum);
+  width: 100%;
+}
+
+.sharp-input-box input::placeholder {
+  color: rgba(69, 12, 63, 0.4);
+}
+
+/* Sharp Badge */
+.sharp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  border: 1px solid var(--color-plum);
+}
+
+.sharp-badge-green {
+  background-color: var(--color-emerald);
+  color: #ffffff;
+}
+
+.sharp-badge-plum {
+  background-color: var(--color-plum);
+  color: #ffffff;
+}
+
+.sharp-badge-outline {
+  background-color: transparent;
+  color: var(--color-plum);
+}
+
+/* Tab Navigation */
+.sharp-tab {
+  background-color: var(--color-white);
+  color: var(--color-plum);
+  border: 2px solid var(--color-plum);
+  padding: 12px 24px;
+  font-weight: 700;
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: var(--shadow-sharp-sm);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sharp-tab.active {
+  background-color: var(--color-plum);
+  color: #ffffff;
+}
+
+.sharp-tab:hover:not(.active) {
+  background-color: var(--bg-primary);
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
