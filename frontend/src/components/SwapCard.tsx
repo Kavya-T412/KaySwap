@@ -1,16 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowDownUp, Settings, RefreshCw, AlertCircle, KeyRound } from 'lucide-react';
+import { ArrowDownUp, Settings, RefreshCw, AlertCircle, KeyRound, ArrowRight } from 'lucide-react';
 import { useKaySwap } from '../hooks/useKaySwap';
 import logoImg from '../KaySwap.png';
 
 interface SwapCardProps {
   kaySwap: ReturnType<typeof useKaySwap>;
+  isConnected: boolean;
   isAuthenticated: boolean;
   onSignIn: () => void;
   isSigning: boolean;
 }
 
-export const SwapCard: React.FC<SwapCardProps> = ({ kaySwap, isAuthenticated, onSignIn, isSigning }) => {
+export const SwapCard: React.FC<SwapCardProps> = ({
+  kaySwap,
+  isConnected,
+  isAuthenticated,
+  onSignIn,
+  isSigning
+}) => {
   const [isKavIn, setIsKavIn] = useState<boolean>(true);
   const [amountIn, setAmountIn] = useState<string>('');
   const [amountOut, setAmountOut] = useState<string>('0');
@@ -43,7 +50,6 @@ export const SwapCard: React.FC<SwapCardProps> = ({ kaySwap, isAuthenticated, on
     }
   };
 
-  // Check allowance for KAV input
   const isKavApproved = () => {
     if (!isKavIn) return true;
     if (!amountIn || parseFloat(amountIn) <= 0) return true;
@@ -64,11 +70,10 @@ export const SwapCard: React.FC<SwapCardProps> = ({ kaySwap, isAuthenticated, on
 
   const handleSwap = async () => {
     if (!amountIn || parseFloat(amountIn) <= 0) return;
-    const minOut = calculateMinOut();
     if (isKavIn) {
-      await kaySwap.swapKavForEth(amountIn, minOut);
+      await kaySwap.swapKavForEth(amountIn, slippage);
     } else {
-      await kaySwap.swapEthForKav(amountIn, minOut);
+      await kaySwap.swapEthForKav(amountIn, slippage);
     }
     setAmountIn('');
     setAmountOut('0');
@@ -77,7 +82,7 @@ export const SwapCard: React.FC<SwapCardProps> = ({ kaySwap, isAuthenticated, on
   const getExchangeRate = () => {
     const resKav = parseFloat(kaySwap.reserveKav);
     const resEth = parseFloat(kaySwap.reserveEth);
-    if (resKav <= 0 || resEth <= 0) return 'No Liquidity';
+    if (resKav <= 0 || resEth <= 0) return 'No Pool Liquidity';
     const rate = (resKav / resEth).toFixed(2);
     return `1 ETH ≈ ${rate} KAV`;
   };
@@ -307,7 +312,11 @@ export const SwapCard: React.FC<SwapCardProps> = ({ kaySwap, isAuthenticated, on
       )}
 
       {/* Action Buttons */}
-      {!isAuthenticated ? (
+      {!isConnected ? (
+        <div style={{ textAlign: 'center', padding: '14px', border: '2px dashed #450C3F', fontWeight: 700, fontSize: '0.9rem' }}>
+          CONNECT WALLET TO START SWAPPING
+        </div>
+      ) : !isAuthenticated ? (
         <button
           className="sharp-button-secondary"
           onClick={onSignIn}
@@ -315,7 +324,7 @@ export const SwapCard: React.FC<SwapCardProps> = ({ kaySwap, isAuthenticated, on
           style={{ width: '100%', gap: '8px' }}
         >
           <KeyRound size={18} />
-          <span>{isSigning ? 'SIGNING...' : 'SIGN IN WITH ETHEREUM TO SWAP'}</span>
+          <span>{isSigning ? 'SIGNING MESSAGE...' : 'SIGN IN WITH ETHEREUM TO SWAP'}</span>
         </button>
       ) : !isKavApproved() ? (
         <button

@@ -4,9 +4,9 @@
   <img src="./frontend/src/KaySwap.png" alt="KaySwap Logo" width="120" />
 </p>
 
-**KaySwap** is a sharp-edged, high-contrast Web3 Decentralized Exchange (DEX) and Automated Market Maker (AMM) application designed for swapping **Kavya Token (KAV)** with **ETH** on the Ethereum **Sepolia Testnet**.
+**KaySwap** is a Web3 Decentralized Exchange (DEX) and Automated Market Maker (AMM) application designed for swapping **Kavya Token (KAV)** with **ETH** on the Ethereum **Sepolia Testnet**.
 
-Built with modern Web3 standards, KaySwap features constant-product liquidity pool dynamics ($x \cdot y = k$), Sign-In With Ethereum (SIWE) authentication with 15-minute auto-expiry, and a unique sharp-edged design system.
+Built with modern Web3 standards, KaySwap features constant-product liquidity pool dynamics ($x \cdot y = k$), Sign-In With Ethereum (SIWE) authentication with 15-minute auto-expiry.
 
 ---
 

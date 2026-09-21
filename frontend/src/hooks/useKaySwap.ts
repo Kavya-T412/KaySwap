@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAccount } from 'wagmi';
 import { BrowserProvider, Contract, formatEther, parseEther } from 'ethers';
 import { KAVYA_TOKEN_ADDRESS, KAYSWAP_AMM_ADDRESS, KAVYA_TOKEN_ABI, KAYSWAP_AMM_ABI } from '../config/contracts';
+import { LoaderStep } from '../components/LoaderCard';
 
 export interface TransactionItem {
   id: string;
@@ -13,7 +14,7 @@ export interface TransactionItem {
   error?: string;
 }
 
-export function useKaySwap() {
+export function useKaySwap(onSwapSuccess?: (txHash?: string) => void) {
   const { address, isConnected } = useAccount();
 
   const [ethBalance, setEthBalance] = useState<string>('0');
@@ -23,6 +24,8 @@ export function useKaySwap() {
 
   const [reserveKav, setReserveKav] = useState<string>('0');
   const [reserveEth, setReserveEth] = useState<string>('0');
+  const [rawReserveKav, setRawReserveKav] = useState<bigint>(0n);
+  const [rawReserveEth, setRawReserveEth] = useState<bigint>(0n);
   const [totalLpSupply, setTotalLpSupply] = useState<string>('0');
 
   const [kavTotalSupply, setKavTotalSupply] = useState<string>('0');
@@ -33,6 +36,11 @@ export function useKaySwap() {
   const [txPending, setTxPending] = useState<boolean>(false);
   const [txHash, setTxHash] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Loader Card State
+  const [isLoaderOpen, setIsLoaderOpen] = useState<boolean>(false);
+  const [loaderTitle, setLoaderTitle] = useState<string>('TRANSACTION IN PROGRESS');
+  const [loaderSteps, setLoaderSteps] = useState<LoaderStep[]>([]);
 
   // Transaction History State & Modal Toggle
   const [transactions, setTransactions] = useState<TransactionItem[]>([]);
@@ -62,9 +70,7 @@ export function useKaySwap() {
     if (address) {
       try {
         localStorage.setItem(`kayswap_txs_${address.toLowerCase()}`, JSON.stringify(txs));
-      } catch (e) {
-        console.error('Failed to save transaction history', e);
-      }
+      } catch (e) {}
     }
   };
 
@@ -97,7 +103,6 @@ export function useKaySwap() {
     saveTransactions([]);
   };
 
-  // Helper to get ethers provider/signer
   const getEthersSigner = async () => {
     if (!window.ethereum) throw new Error('No crypto wallet detected');
     const provider = new BrowserProvider(window.ethereum);
@@ -134,6 +139,8 @@ export function useKaySwap() {
 
       // Fetch Reserves
       const [rKav, rEth] = await ammContract.getReserves().catch(() => [0n, 0n]);
+      setRawReserveKav(rKav);
+      setRawReserveEth(rEth);
       setReserveKav(formatEther(rKav));
       setReserveEth(formatEther(rEth));
 
@@ -167,18 +174,15 @@ export function useKaySwap() {
     return () => clearInterval(interval);
   }, [refreshData]);
 
-  // Quote calculation
+  // Quote calculation using loss-less BigInt math
   const getSwapQuote = (amountIn: string, isKavIn: boolean): string => {
     if (!amountIn || parseFloat(amountIn) <= 0) return '0';
     try {
       const amtInBig = parseEther(amountIn);
-      const resKavBig = parseEther(reserveKav || '0');
-      const resEthBig = parseEther(reserveEth || '0');
+      if (rawReserveKav === 0n || rawReserveEth === 0n) return '0';
 
-      if (resKavBig === 0n || resEthBig === 0n) return '0';
-
-      const resIn = isKavIn ? resKavBig : resEthBig;
-      const resOut = isKavIn ? resEthBig : resKavBig;
+      const resIn = isKavIn ? rawReserveKav : rawReserveEth;
+      const resOut = isKavIn ? rawReserveEth : rawReserveKav;
 
       const amountInWithFee = amtInBig * 997n;
       const numerator = amountInWithFee * resOut;
@@ -191,11 +195,28 @@ export function useKaySwap() {
     }
   };
 
-  // Actions
-  const approveKav = async (amount: string) => {
+  // -------------------------------------------------------------
+  // ACTION: APPROVE KAV TOKEN
+  // -------------------------------------------------------------
+  const approveKav = async (amount: string, showCard: boolean = true) => {
     setTxPending(true);
     setError(null);
     setTxHash(null);
+
+    if (showCard) {
+      setLoaderTitle('APPROVING KAV TOKEN');
+      setLoaderSteps([
+        {
+          stepNumber: 1,
+          totalSteps: 1,
+          title: `Approve ${amount} KAV`,
+          description: 'Awaiting wallet signature for ERC20 token approval...',
+          status: 'pending',
+        },
+      ]);
+      setIsLoaderOpen(true);
+    }
+
     const recordId = addTransactionRecord('APPROVE', `Approve ${amount} KAV`);
     try {
       const signer = await getEthersSigner();
@@ -203,8 +224,36 @@ export function useKaySwap() {
       const tx = await kavContract.approve(KAYSWAP_AMM_ADDRESS, parseEther(amount));
       setTxHash(tx.hash);
       updateTransactionRecord(recordId, { hash: tx.hash });
+
+      if (showCard) {
+        setLoaderSteps([
+          {
+            stepNumber: 1,
+            totalSteps: 1,
+            title: `Approve ${amount} KAV`,
+            description: 'Transaction broadcasted to Sepolia network. Confirming block...',
+            status: 'pending',
+            txHash: tx.hash,
+          },
+        ]);
+      }
+
       await tx.wait();
       updateTransactionRecord(recordId, { status: 'success' });
+
+      if (showCard) {
+        setLoaderSteps([
+          {
+            stepNumber: 1,
+            totalSteps: 1,
+            title: `Approve ${amount} KAV Approved`,
+            description: 'KAV token allowance successfully granted to KaySwap AMM contract.',
+            status: 'success',
+            txHash: tx.hash,
+          },
+        ]);
+      }
+
       await refreshData();
       return true;
     } catch (err: any) {
@@ -212,63 +261,268 @@ export function useKaySwap() {
       const errMsg = err?.reason || err?.message || 'Approval failed';
       setError(errMsg);
       updateTransactionRecord(recordId, { status: 'failed', error: errMsg });
+
+      if (showCard) {
+        setLoaderSteps([
+          {
+            stepNumber: 1,
+            totalSteps: 1,
+            title: 'Approval Failed',
+            description: errMsg,
+            status: 'failed',
+            error: errMsg,
+          },
+        ]);
+      }
       return false;
     } finally {
       setTxPending(false);
     }
   };
 
-  const swapKavForEth = async (amountKav: string, minEthOut: string) => {
+  // -------------------------------------------------------------
+  // ACTION: SWAP KAV FOR ETH (With exact BigInt precision & loader)
+  // -------------------------------------------------------------
+  const swapKavForEth = async (amountKav: string, slippagePct: string = '0.5') => {
     setTxPending(true);
     setError(null);
     setTxHash(null);
-    const recordId = addTransactionRecord('SWAP_KAV_ETH', `Swap ${amountKav} KAV for ~${minEthOut} ETH`);
+
+    const needsApprove = parseFloat(kavAllowance) < parseFloat(amountKav);
+    const totalSteps = needsApprove ? 2 : 1;
+
+    setLoaderTitle('EXECUTING KAV → ETH SWAP');
+    const initialSteps: LoaderStep[] = [];
+    if (needsApprove) {
+      initialSteps.push({
+        stepNumber: 1,
+        totalSteps: 2,
+        title: 'Step 1: Approve KAV Token',
+        description: 'Allow KaySwap AMM contract to access your KAV tokens...',
+        status: 'pending',
+      });
+      initialSteps.push({
+        stepNumber: 2,
+        totalSteps: 2,
+        title: 'Step 2: Swap KAV for ETH',
+        description: 'Execute instant constant-product AMM swap...',
+        status: 'idle',
+      });
+    } else {
+      initialSteps.push({
+        stepNumber: 1,
+        totalSteps: 1,
+        title: 'Swap KAV for ETH',
+        description: 'Awaiting wallet signature to send KAV and receive ETH...',
+        status: 'pending',
+      });
+    }
+    setLoaderSteps(initialSteps);
+    setIsLoaderOpen(true);
+
+    let approveSuccess = true;
+    if (needsApprove) {
+      approveSuccess = await approveKav(amountKav, false);
+      if (!approveSuccess) {
+        setLoaderSteps([
+          {
+            stepNumber: 1,
+            totalSteps: 2,
+            title: 'Step 1: KAV Approval Failed',
+            description: 'Approval rejected or failed in wallet.',
+            status: 'failed',
+          },
+          {
+            stepNumber: 2,
+            totalSteps: 2,
+            title: 'Step 2: Swap KAV for ETH',
+            description: 'Cancelled due to approval failure.',
+            status: 'idle',
+          },
+        ]);
+        setTxPending(false);
+        return false;
+      }
+
+      setLoaderSteps([
+        {
+          stepNumber: 1,
+          totalSteps: 2,
+          title: 'Step 1: KAV Approved',
+          description: 'Allowance verified.',
+          status: 'success',
+        },
+        {
+          stepNumber: 2,
+          totalSteps: 2,
+          title: 'Step 2: Swap KAV for ETH',
+          description: 'Awaiting wallet signature for KAV → ETH swap...',
+          status: 'pending',
+        },
+      ]);
+    }
+
+    // Exact BigInt calculation for minEthOut
+    const kavIn = parseEther(amountKav);
+    const estOutStr = getSwapQuote(amountKav, true);
+    const estOutBig = parseEther(estOutStr);
+    const slipBps = BigInt(Math.floor(parseFloat(slippagePct) * 100));
+    const minEthOutBig = (estOutBig * (10000n - slipBps)) / 10000n;
+
+    const recordId = addTransactionRecord('SWAP_KAV_ETH', `Swap ${amountKav} KAV for ETH`);
+
     try {
       const signer = await getEthersSigner();
       const ammContract = new Contract(KAYSWAP_AMM_ADDRESS, KAYSWAP_AMM_ABI, signer);
-      const kavIn = parseEther(amountKav);
-      const ethMin = parseEther(minEthOut);
 
-      const tx = await ammContract.swapKAVForETH(kavIn, ethMin);
+      const tx = await ammContract.swapKAVForETH(kavIn, minEthOutBig);
       setTxHash(tx.hash);
       updateTransactionRecord(recordId, { hash: tx.hash });
+
+      const currentStepNum = needsApprove ? 2 : 1;
+      setLoaderSteps((prev) =>
+        prev.map((s) =>
+          s.stepNumber === currentStepNum
+            ? {
+                ...s,
+                description: 'Swap tx broadcasted to Sepolia! Confirming on-chain...',
+                status: 'pending',
+                txHash: tx.hash,
+              }
+            : s
+        )
+      );
+
       await tx.wait();
       updateTransactionRecord(recordId, { status: 'success' });
+
+      setLoaderSteps((prev) =>
+        prev.map((s) =>
+          s.stepNumber === currentStepNum
+            ? {
+                ...s,
+                title: needsApprove ? 'Step 2: Swap Completed' : 'Swap KAV for ETH Completed',
+                description: `Successfully swapped ${amountKav} KAV for ~${estOutStr} ETH! ETH delivered directly to your wallet.`,
+                status: 'success',
+                txHash: tx.hash,
+              }
+            : s
+        )
+      );
+
       await refreshData();
+      if (onSwapSuccess) {
+        onSwapSuccess(tx.hash);
+      }
       return true;
     } catch (err: any) {
       console.error('Swap KAV->ETH failed:', err);
       const errMsg = err?.reason || err?.message || 'Swap failed';
       setError(errMsg);
       updateTransactionRecord(recordId, { status: 'failed', error: errMsg });
+
+      const currentStepNum = needsApprove ? 2 : 1;
+      setLoaderSteps((prev) =>
+        prev.map((s) =>
+          s.stepNumber === currentStepNum
+            ? {
+                ...s,
+                title: 'Swap Failed',
+                description: errMsg,
+                status: 'failed',
+                error: errMsg,
+              }
+            : s
+        )
+      );
       return false;
     } finally {
       setTxPending(false);
     }
   };
 
-  const swapEthForKav = async (amountEth: string, minKavOut: string) => {
+  // -------------------------------------------------------------
+  // ACTION: SWAP ETH FOR KAV (With loader)
+  // -------------------------------------------------------------
+  const swapEthForKav = async (amountEth: string, slippagePct: string = '0.5') => {
     setTxPending(true);
     setError(null);
     setTxHash(null);
-    const recordId = addTransactionRecord('SWAP_ETH_KAV', `Swap ${amountEth} ETH for ~${minKavOut} KAV`);
+
+    setLoaderTitle('EXECUTING ETH → KAV SWAP');
+    setLoaderSteps([
+      {
+        stepNumber: 1,
+        totalSteps: 1,
+        title: `Swap ${amountEth} ETH for KAV`,
+        description: 'Awaiting wallet signature for ETH → KAV swap...',
+        status: 'pending',
+      },
+    ]);
+    setIsLoaderOpen(true);
+
+    const ethIn = parseEther(amountEth);
+    const estOutStr = getSwapQuote(amountEth, false);
+    const estOutBig = parseEther(estOutStr);
+    const slipBps = BigInt(Math.floor(parseFloat(slippagePct) * 100));
+    const minKavOutBig = (estOutBig * (10000n - slipBps)) / 10000n;
+
+    const recordId = addTransactionRecord('SWAP_ETH_KAV', `Swap ${amountEth} ETH for KAV`);
+
     try {
       const signer = await getEthersSigner();
       const ammContract = new Contract(KAYSWAP_AMM_ADDRESS, KAYSWAP_AMM_ABI, signer);
-      const kavMin = parseEther(minKavOut);
 
-      const tx = await ammContract.swapETHForKAV(kavMin, { value: parseEther(amountEth) });
+      const tx = await ammContract.swapETHForKAV(minKavOutBig, { value: ethIn });
       setTxHash(tx.hash);
       updateTransactionRecord(recordId, { hash: tx.hash });
+
+      setLoaderSteps([
+        {
+          stepNumber: 1,
+          totalSteps: 1,
+          title: `Swap ${amountEth} ETH for KAV`,
+          description: 'Transaction broadcasted to Sepolia! Confirming on-chain...',
+          status: 'pending',
+          txHash: tx.hash,
+        },
+      ]);
+
       await tx.wait();
       updateTransactionRecord(recordId, { status: 'success' });
+
+      setLoaderSteps([
+        {
+          stepNumber: 1,
+          totalSteps: 1,
+          title: 'Swap ETH for KAV Completed',
+          description: `Successfully swapped ${amountEth} ETH for ~${estOutStr} KAV! KAV deposited to your wallet.`,
+          status: 'success',
+          txHash: tx.hash,
+        },
+      ]);
+
       await refreshData();
+      if (onSwapSuccess) {
+        onSwapSuccess(tx.hash);
+      }
       return true;
     } catch (err: any) {
       console.error('Swap ETH->KAV failed:', err);
       const errMsg = err?.reason || err?.message || 'Swap failed';
       setError(errMsg);
       updateTransactionRecord(recordId, { status: 'failed', error: errMsg });
+
+      setLoaderSteps([
+        {
+          stepNumber: 1,
+          totalSteps: 1,
+          title: 'Swap Failed',
+          description: errMsg,
+          status: 'failed',
+          error: errMsg,
+        },
+      ]);
       return false;
     } finally {
       setTxPending(false);
@@ -279,6 +533,31 @@ export function useKaySwap() {
     setTxPending(true);
     setError(null);
     setTxHash(null);
+
+    const needsApprove = parseFloat(kavAllowance) < parseFloat(amountKav);
+    setLoaderTitle('ADDING LIQUIDITY TO POOL');
+    setLoaderSteps([
+      {
+        stepNumber: 1,
+        totalSteps: needsApprove ? 2 : 1,
+        title: needsApprove ? 'Step 1: Approve KAV Token' : 'Add KAV + ETH Liquidity',
+        description: 'Awaiting transaction signature...',
+        status: 'pending',
+      },
+    ]);
+    setIsLoaderOpen(true);
+
+    if (needsApprove) {
+      const appOk = await approveKav(amountKav, false);
+      if (!appOk) {
+        setLoaderSteps([
+          { stepNumber: 1, totalSteps: 2, title: 'KAV Approval Failed', description: 'Cancelled.', status: 'failed' },
+        ]);
+        setTxPending(false);
+        return false;
+      }
+    }
+
     const recordId = addTransactionRecord('ADD_LIQUIDITY', `Add Liquidity (${amountKav} KAV + ${amountEth} ETH)`);
     try {
       const signer = await getEthersSigner();
@@ -290,7 +569,18 @@ export function useKaySwap() {
       setTxHash(tx.hash);
       updateTransactionRecord(recordId, { hash: tx.hash });
       await tx.wait();
+
       updateTransactionRecord(recordId, { status: 'success' });
+      setLoaderSteps([
+        {
+          stepNumber: 1,
+          totalSteps: 1,
+          title: 'Liquidity Added Successfully',
+          description: `Deposited ${amountKav} KAV & ${amountEth} ETH into KaySwap pool. Minted KAY-LP tokens!`,
+          status: 'success',
+          txHash: tx.hash,
+        },
+      ]);
       await refreshData();
       return true;
     } catch (err: any) {
@@ -298,6 +588,9 @@ export function useKaySwap() {
       const errMsg = err?.reason || err?.message || 'Add Liquidity failed';
       setError(errMsg);
       updateTransactionRecord(recordId, { status: 'failed', error: errMsg });
+      setLoaderSteps([
+        { stepNumber: 1, totalSteps: 1, title: 'Add Liquidity Failed', description: errMsg, status: 'failed', error: errMsg },
+      ]);
       return false;
     } finally {
       setTxPending(false);
@@ -308,6 +601,19 @@ export function useKaySwap() {
     setTxPending(true);
     setError(null);
     setTxHash(null);
+
+    setLoaderTitle('REMOVING LIQUIDITY');
+    setLoaderSteps([
+      {
+        stepNumber: 1,
+        totalSteps: 1,
+        title: `Burn ${amountLp} KAY-LP Tokens`,
+        description: 'Redeeming underlying KAV and ETH reserves...',
+        status: 'pending',
+      },
+    ]);
+    setIsLoaderOpen(true);
+
     const recordId = addTransactionRecord('REMOVE_LIQUIDITY', `Remove ${amountLp} LP Tokens Liquidity`);
     try {
       const signer = await getEthersSigner();
@@ -318,7 +624,18 @@ export function useKaySwap() {
       setTxHash(tx.hash);
       updateTransactionRecord(recordId, { hash: tx.hash });
       await tx.wait();
+
       updateTransactionRecord(recordId, { status: 'success' });
+      setLoaderSteps([
+        {
+          stepNumber: 1,
+          totalSteps: 1,
+          title: 'Liquidity Removed',
+          description: `Burned ${amountLp} LP tokens and received proportional KAV + ETH reserves.`,
+          status: 'success',
+          txHash: tx.hash,
+        },
+      ]);
       await refreshData();
       return true;
     } catch (err: any) {
@@ -326,6 +643,9 @@ export function useKaySwap() {
       const errMsg = err?.reason || err?.message || 'Remove Liquidity failed';
       setError(errMsg);
       updateTransactionRecord(recordId, { status: 'failed', error: errMsg });
+      setLoaderSteps([
+        { stepNumber: 1, totalSteps: 1, title: 'Remove Liquidity Failed', description: errMsg, status: 'failed', error: errMsg },
+      ]);
       return false;
     } finally {
       setTxPending(false);
@@ -336,7 +656,7 @@ export function useKaySwap() {
     setTxPending(true);
     setError(null);
     setTxHash(null);
-    const recordId = addTransactionRecord('CLAIM_FAUCET', `Claim 100 Faucet KAV Tokens`);
+    const recordId = addTransactionRecord('CLAIM_FAUCET', `Claim 1,000 Faucet KAV Tokens`);
     try {
       const signer = await getEthersSigner();
       const kavContract = new Contract(KAVYA_TOKEN_ADDRESS, KAVYA_TOKEN_ABI, signer);
@@ -391,6 +711,8 @@ export function useKaySwap() {
     kavAllowance,
     reserveKav,
     reserveEth,
+    rawReserveKav,
+    rawReserveEth,
     totalLpSupply,
     kavTotalSupply,
     kavMaxSupply,
@@ -412,6 +734,9 @@ export function useKaySwap() {
     removeLiquidity,
     claimFaucet,
     mintTokens,
+    isLoaderOpen,
+    setIsLoaderOpen,
+    loaderTitle,
+    loaderSteps,
   };
 }
-

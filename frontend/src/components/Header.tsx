@@ -1,9 +1,10 @@
 import React from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { ShieldAlert, KeyRound, RefreshCw, History } from 'lucide-react';
+import { ShieldAlert, KeyRound, RefreshCw, History, ShieldCheck } from 'lucide-react';
 import logoImg from '../KaySwap.png';
 
 interface HeaderProps {
+  isConnected: boolean;
   isAuthenticated: boolean;
   isSessionExpired: boolean;
   onSignIn: () => void;
@@ -12,9 +13,12 @@ interface HeaderProps {
   txCount: number;
   pendingCount: number;
   onOpenHistory: () => void;
+  onOpenAdmin: () => void;
+  isDeployer: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
+  isConnected,
   isAuthenticated,
   isSessionExpired,
   onSignIn,
@@ -23,14 +27,16 @@ export const Header: React.FC<HeaderProps> = ({
   txCount,
   pendingCount,
   onOpenHistory,
+  onOpenAdmin,
+  isDeployer,
 }) => {
   return (
-    <header className="sharp-card" style={{ padding: '16px 24px', marginBottom: '32px' }}>
+    <header className="sharp-card" style={{ padding: '16px 24px', marginBottom: '28px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-        {/* Branding & Logo - Click redirects to Swap page */}
+        {/* Branding & Logo - Click redirects to Home/Landing page */}
         <div
           onClick={onLogoClick}
-          title="Click to go to Swap page"
+          title="Click to go to KaySwap Home"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -54,9 +60,9 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Status Bar, Transaction History & Wallet Connect */}
+        {/* Action Buttons & Wallet Connection */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          {/* History Button with Badge */}
+          {/* Transactions History Button */}
           <button
             className="sharp-button-outline"
             onClick={onOpenHistory}
@@ -91,8 +97,30 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </button>
 
-          {/* SIWE Session Action - Differentiates New User vs Expired User */}
-          {!isAuthenticated && (
+          {/* Admin Audit Logs Button - STRICTLY SHOWN ONLY TO CONTRACT DEPLOYER */}
+          {isDeployer && (
+            <button
+              className="sharp-button-outline"
+              onClick={onOpenAdmin}
+              title="Contract Deployer Feedback Audit Logs"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '0.85rem',
+                padding: '8px 12px',
+                borderColor: '#165823',
+                backgroundColor: '#165823',
+                color: '#ffffff',
+              }}
+            >
+              <ShieldCheck size={16} />
+              <span>ADMIN LOGS</span>
+            </button>
+          )}
+
+          {/* SIWE Session Button - ONLY shown when wallet IS connected AND unauthenticated or session expired */}
+          {isConnected && !isAuthenticated && (
             <button
               className="sharp-button-outline"
               onClick={onSignIn}
@@ -119,17 +147,16 @@ export const Header: React.FC<HeaderProps> = ({
                 {isSigning
                   ? 'SIGNING...'
                   : isSessionExpired
-                  ? 'SESSION EXPIRED - RECONNECT'
-                  : 'SIGN IN WITH ETHEREUM'}
+                  ? 'SESSION EXPIRED - RE-SIGN SIWE'
+                  : 'SIGN SIWE MESSAGE'}
               </span>
             </button>
           )}
 
-          {/* RainbowKit Wallet Connect - Hides hardhat/network status, shows ETH balance near address */}
+          {/* RainbowKit Wallet Connect Button */}
           <ConnectButton showBalance={true} chainStatus="none" accountStatus="full" />
         </div>
       </div>
     </header>
   );
 };
-

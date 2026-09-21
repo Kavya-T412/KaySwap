@@ -10,7 +10,7 @@ import './index.css';
 // RainbowKit & Wagmi Configuration - Sepolia Only
 const config = getDefaultConfig({
   appName: 'KaySwap DEX',
-  projectId: 'a587449a0224d4554b7320b92e778401', // Standard demo Project ID for RainbowKit
+  projectId: '5c499eda8e4b1a80534ed01c77f121dd', // Standard demo Project ID for RainbowKit
   chains: [sepolia],
 });
 

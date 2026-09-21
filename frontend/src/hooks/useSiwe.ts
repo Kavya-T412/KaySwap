@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useAccount, useChainId } from 'wagmi';
+import { useAccount, useChainId, useDisconnect } from 'wagmi';
 import { BrowserProvider } from 'ethers';
 import {
   getStoredSession,
@@ -12,6 +12,7 @@ import {
 
 export function useSiwe() {
   const { address, isConnected } = useAccount();
+  const { disconnect } = useDisconnect();
   const chainId = useChainId();
 
   const [session, setSession] = useState<SiweSession | null>(null);
@@ -29,12 +30,16 @@ export function useSiwe() {
       } else {
         setSession(null);
         setIsSessionExpired(wasExpired);
+        if (wasExpired) {
+          // Disconnect wallet if loaded with expired session
+          disconnect();
+        }
       }
     } else {
       setSession(null);
       setIsSessionExpired(false);
     }
-  }, [address, chainId, isConnected]);
+  }, [address, chainId, isConnected, disconnect]);
 
   // Expiration timer check (15 minutes)
   useEffect(() => {
@@ -43,16 +48,19 @@ export function useSiwe() {
     const checkExpiration = () => {
       const remainingMs = session.expiresAt - Date.now();
       if (remainingMs <= 0) {
-        clearSession(session.address);
+        const expiredAddr = session.address;
+        clearSession(expiredAddr);
         setSession(null);
         setIsSessionExpired(true);
+        // Automatically disconnect wallet when 15-min SIWE session expires
+        disconnect();
       }
     };
 
     checkExpiration();
     const interval = setInterval(checkExpiration, 2000);
     return () => clearInterval(interval);
-  }, [session]);
+  }, [session, disconnect]);
 
   // Sign SIWE Message
   const signIn = useCallback(async () => {
@@ -96,7 +104,8 @@ export function useSiwe() {
     if (address) clearSession(address);
     setSession(null);
     setIsSessionExpired(false);
-  }, [address]);
+    disconnect();
+  }, [address, disconnect]);
 
   const isAuthenticated = Boolean(session && Date.now() < session.expiresAt);
 
@@ -110,3 +119,4 @@ export function useSiwe() {
     signOut,
   };
 }
+

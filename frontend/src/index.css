@@ -36,19 +36,47 @@ button, input, select, textarea, div, article, section, nav, header, footer {
   border-radius: 0px !important;
 }
 
-/* Custom Scrollbar */
+/* ------------------------------------------------------------- */
+/* VERTICAL SCROLLBAR: ONLY KAYSWAP LOGO ICON (NO COLOR FILL)    */
+/* ------------------------------------------------------------- */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 22px;
+  height: 0px;
 }
+
 ::-webkit-scrollbar-track {
-  background: var(--bg-primary);
-  border-left: 2px solid var(--color-plum);
+  background: transparent;
+  border-left: 1px dashed rgba(69, 12, 63, 0.2);
 }
+
 ::-webkit-scrollbar-thumb {
-  background: var(--color-plum);
+  background-color: transparent !important;
+  background-image: url('./KaySwap.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 20px 20px;
+  border: none !important;
+  box-shadow: none !important;
+  cursor: pointer;
 }
+
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-emerald);
+  background-color: transparent !important;
+  transform: scale(1.15);
+  filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.3));
+}
+
+/* Hide horizontal scrollbar track divisions */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  height: 0px !important;
+  width: 0px !important;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
+  scroll-behavior: smooth !important;
 }
 
 /* Typography & Utilities */

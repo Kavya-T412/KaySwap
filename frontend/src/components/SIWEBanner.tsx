@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldAlert, ArrowRight, Lock, KeyRound } from 'lucide-react';
+import { ArrowRight, Lock, KeyRound } from 'lucide-react';
 
 interface SIWEBannerProps {
   isConnected: boolean;
@@ -50,13 +50,13 @@ export const SIWEBanner: React.FC<SIWEBannerProps> = ({
           {isSessionExpired ? <Lock size={28} /> : <KeyRound size={28} />}
         </div>
         <div>
-          <h3 style={{ color: '#FCECD8', fontSize: '1.2rem', marginBottom: '4px', textTransform: 'uppercase' }}>
-            {isSessionExpired ? 'SIWE Session Expired (15 Min Limit)' : 'Sign In With Ethereum Required'}
+          <h3 style={{ color: '#FCECD8', fontSize: '1.15rem', marginBottom: '4px', textTransform: 'uppercase' }}>
+            {isSessionExpired ? 'SIWE SESSION EXPIRED (15-MIN SECURITY TIMEOUT)' : 'SIGNATURE VERIFICATION REQUIRED'}
           </h3>
-          <p style={{ color: '#FCECD8', opacity: 0.9, fontSize: '0.9rem' }}>
+          <p style={{ color: '#FCECD8', opacity: 0.9, fontSize: '0.88rem', margin: 0 }}>
             {isSessionExpired
-              ? 'Your 15-minute SIWE security verification has expired. Please re-sign to continue trading on Sepolia.'
-              : 'Please sign the SIWE message with your connected wallet to authenticate your Sepolia trading session.'}
+              ? 'Your 15-minute SIWE security verification expired and automatically disconnected. Please sign the SIWE message to re-authenticate.'
+              : 'Please sign the SIWE message through your connected wallet to authenticate your Sepolia trading session.'}
           </p>
         </div>
       </div>
@@ -67,15 +67,15 @@ export const SIWEBanner: React.FC<SIWEBannerProps> = ({
         disabled={isSigning}
         style={{
           border: '2px solid #FCECD8',
-          fontSize: '0.95rem',
-          padding: '12px 24px'
+          fontSize: '0.9rem',
+          padding: '12px 20px'
         }}
       >
         <span>
           {isSigning
-            ? 'SIGNING...'
+            ? 'SIGNING MESSAGE...'
             : isSessionExpired
-            ? 'RECONNECT & RE-SIGN SIWE'
+            ? 'RE-SIGN SIWE MESSAGE'
             : 'SIGN IN WITH ETHEREUM'}
         </span>
         <ArrowRight size={18} />
