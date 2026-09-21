@@ -81,7 +81,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     };
 
     window.addEventListener('scroll', handleWindowScroll, { passive: true });
-    handleWindowScroll(); // Initial position check
+    handleWindowScroll();
 
     return () => {
       window.removeEventListener('scroll', handleWindowScroll);
@@ -100,7 +100,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', paddingBottom: '32px', width: '100%' }}>
       {/* ------------------------------------------------------------- */}
-      {/* UNIFIED HOME PAGE HERO                                        */}
+      {/* UNIFIED HERO: WHERE KAV MEETS ETH — TRUSTLESSLY.              */}
       {/* ------------------------------------------------------------- */}
       <section
         style={{
@@ -136,7 +136,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   marginBottom: '8px'
                 }}
               >
-                <Zap size={14} /> DECENTRALIZED AMM EXCHANGE &bull; SEPOLIA TESTNET
+                <Zap size={14} /> WHERE KAV MEETS ETH &mdash; TRUSTLESSLY.
               </div>
               <h1 style={{ color: '#FCECD8', fontSize: '3rem', lineHeight: '1.1', textTransform: 'uppercase', letterSpacing: '0.03em', margin: 0 }}>
                 KAY<span style={{ color: '#165823', backgroundColor: '#FCECD8', padding: '0 8px' }}>SWAP</span> PROTOCOL
@@ -144,9 +144,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </div>
           </div>
 
-          <p style={{ fontSize: '1.25rem', lineHeight: '1.6', color: '#FCECD8', opacity: 0.95, margin: 0, fontWeight: 500, maxWidth: '1000px' }}>
-            KaySwap is a high-speed Automated Market Maker (AMM) protocol engineered for peer-to-contract token swaps between <strong>Kavya (KAV)</strong> and <strong>Ethereum (ETH)</strong> on Sepolia. Powered by the constant product invariant (<code>x &times; y = k</code>), KaySwap provides automated liquidity pools, low-slippage trading, and cryptographic Sign-In with Ethereum (SIWE) session security.
-          </p>
+          <div>
+            <h2 style={{ color: '#FCECD8', fontSize: '1.6rem', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
+              Swap. Provide Liquidity. Stay in Control.
+            </h2>
+            <p style={{ fontSize: '1.2rem', lineHeight: '1.6', color: '#FCECD8', opacity: 0.95, margin: 0, fontWeight: 500, maxWidth: '1000px' }}>
+              A decentralized AMM built for fast, permissionless KAV &harr; ETH trading on Sepolia. <strong>Swap. Pool. Verify.</strong> All powered by smart contracts (KayAMM).
+            </p>
+          </div>
 
           {/* Highlights Pill Bar */}
           <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', fontSize: '0.9rem', fontWeight: 700 }}>
@@ -171,16 +176,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               onClick={() => onNavigateTab('swap')}
               style={{ padding: '16px 32px', fontSize: '1.1rem', border: '2px solid #FCECD8' }}
             >
-              <span>LAUNCH SWAP EXECUTION</span>
+              <span>SWAP NOW</span>
               <ArrowRight size={22} />
             </button>
 
             <button
               className="sharp-button-outline"
               onClick={() => onNavigateTab('liquidity')}
-              style={{ padding: '16px 28px', fontSize: '1.1rem', borderColor: '#FCECD8', color: '#FCECD8', backgroundColor: 'transparent' }}
+              style={{ padding: '16px 28px', fontSize: '1.05rem', borderColor: '#FCECD8', color: '#FCECD8', backgroundColor: 'transparent' }}
             >
-              <span>PROVIDE LIQUIDITY</span>
+              <span>BECOME A LIQUIDITY PROVIDER &rarr;</span>
             </button>
 
             <button
@@ -203,7 +208,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '12px' }}>
             <div>
               <div className="sharp-badge sharp-badge-plum" style={{ marginBottom: '6px' }}>
-                SECTION 1 &bull; APPLICATION CAPABILITIES (DRIVEN BY VERTICAL SCROLL)
+                SECTION 1 &bull; APPLICATION CAPABILITIES
               </div>
               <h2 style={{ fontSize: '2rem', textTransform: 'uppercase', letterSpacing: '0.02em', margin: 0 }}>
                 APPLICATION <span style={{ color: '#165823' }}>CAPABILITIES</span>
@@ -266,7 +271,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   INSTANT KAV ↔ ETH SWAPS
                 </h3>
                 <p style={{ fontSize: '0.92rem', color: '#555', lineHeight: '1.5' }}>
-                  Swap KAV tokens for ETH and ETH for KAV with exact algorithmic output quotes, configurable slippage bounds (0.1% to 1.0%), and instant on-chain execution.
+                  Set the tokens. Set the amount. Let the protocol do the rest.
                 </p>
               </div>
               <button
@@ -274,7 +279,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 onClick={() => onNavigateTab('swap')}
                 style={{ marginTop: '24px', width: '100%', fontSize: '0.9rem', justifyContent: 'center' }}
               >
-                <span>EXECUTE SWAP NOW</span>
+                <span>SWAP NOW</span>
                 <ArrowRight size={16} />
               </button>
             </div>
@@ -301,7 +306,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   LIQUIDITY POOLS & LP TOKENS
                 </h3>
                 <p style={{ fontSize: '0.92rem', color: '#555', lineHeight: '1.5' }}>
-                  Deposit liquidity into the KAV/ETH pair to earn a proportional share of trading fees. Mint KAY-LP ERC20 tokens and redeem reserves at any time.
+                  Don’t Just Trade Liquidity. Provide It. Earn a proportional 0.3% share of all protocol swap fees.
                 </p>
               </div>
               <button
@@ -309,7 +314,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 onClick={() => onNavigateTab('liquidity')}
                 style={{ marginTop: '24px', width: '100%', fontSize: '0.9rem' }}
               >
-                SUPPLY LIQUIDITY &rarr;
+                BECOME A PROVIDER &rarr;
               </button>
             </div>
 
@@ -335,7 +340,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   SIWE SECURITY & TIMEOUT
                 </h3>
                 <p style={{ fontSize: '0.92rem', color: '#555', lineHeight: '1.5' }}>
-                  Sign-In with Ethereum (EIP-4361) verifies wallet ownership. Sessions automatically expire after 15 minutes, triggering an automatic wallet disconnect.
+                  Sign In With Your Wallet. Not Your Password. Cryptographically secure 15-minute SIWE session verification.
                 </p>
               </div>
               <div style={{ marginTop: '24px', fontSize: '0.85rem', fontWeight: 700, color: '#165823', padding: '10px', backgroundColor: '#FCECD8', border: '1px solid #450C3F', textAlign: 'center' }}>
@@ -365,7 +370,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   TOKENOMICS & TEST FAUCET
                 </h3>
                 <p style={{ fontSize: '0.92rem', color: '#555', lineHeight: '1.5' }}>
-                  KAV features a strict 1,000,000 hard supply cap. Claim 1,000 test KAV tokens every 24 hours from the built-in Sepolia faucet to start trading.
+                  Know the Supply. Understand the Economy. Need Test KAV? Get Funded. Start Swapping.
                 </p>
               </div>
               <button
@@ -399,11 +404,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   TRANSACTION HISTORY & AUDIT LOGS
                 </h3>
                 <p style={{ fontSize: '0.92rem', color: '#555', lineHeight: '1.5' }}>
-                  Track every approve, swap, and liquidity action with status badges, execution timestamps, and direct Sepolia Etherscan block explorer links.
+                  Every Swap Leaves a Trail. Verify It On-Chain with direct Etherscan explorer audit links.
                 </p>
               </div>
               <div style={{ marginTop: '24px', fontSize: '0.85rem', fontWeight: 700, color: '#450C3F', padding: '10px', backgroundColor: '#FCECD8', border: '1px solid #450C3F', textAlign: 'center' }}>
-                LOGGED ON-CHAIN VERIFICATION
+                VERIFY ON-CHAIN
               </div>
             </div>
           </div>
@@ -481,7 +486,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   1. CONNECT & SIGN SIWE
                 </h3>
                 <p style={{ fontSize: '0.88rem', color: '#555', lineHeight: '1.5' }}>
-                  Click <strong>Connect Wallet</strong> in the header to connect on Sepolia. Then sign the cryptographic SIWE message to authenticate your trading session.
+                  Sign In With Your Wallet. Not Your Password. Authenticate your session on Sepolia with EIP-4361.
                 </p>
               </div>
               <button
@@ -489,7 +494,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 onClick={() => onNavigateTab('swap')}
                 style={{ marginTop: '20px', fontSize: '0.85rem', padding: '10px' }}
               >
-                GO TO SWAP EXECUTION &rarr;
+                SWAP NOW &rarr;
               </button>
             </div>
 
@@ -512,10 +517,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <div>
                 <span className="sharp-badge sharp-badge-green" style={{ marginBottom: '12px' }}>STEP 02</span>
                 <h3 style={{ fontSize: '1.2rem', textTransform: 'uppercase', marginBottom: '8px' }}>
-                  2. CLAIM TEST FAUCET
+                  2. CLAIM TEST KAV
                 </h3>
                 <p style={{ fontSize: '0.88rem', color: '#555', lineHeight: '1.5' }}>
-                  Navigate to <strong>Tokenomics & Faucet</strong> tab. Click <strong>Claim 1,000 KAV Faucet</strong> to receive test tokens directly to your wallet.
+                  Need Test KAV? Get Funded. Start Swapping. Claim 1,000 test tokens every 24 hours.
                 </p>
               </div>
               <button
@@ -523,7 +528,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 onClick={() => onNavigateTab('tokenomics')}
                 style={{ marginTop: '20px', fontSize: '0.85rem', padding: '10px' }}
               >
-                GO TO FAUCET &rarr;
+                GET FUNDED &rarr;
               </button>
             </div>
 
@@ -547,14 +552,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             >
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                  <span className="sharp-badge sharp-badge-green">HOW TO SWAP SESSION &bull; STEP 03</span>
+                  <span className="sharp-badge sharp-badge-green">HOW TO SWAP &bull; STEP 03</span>
                   <PlayCircle size={22} color="#165823" />
                 </div>
                 <h3 style={{ fontSize: '1.3rem', textTransform: 'uppercase', marginBottom: '8px', color: '#165823' }}>
                   3. EXECUTE TOKEN SWAP
                 </h3>
                 <p style={{ fontSize: '0.9rem', color: '#450C3F', lineHeight: '1.5', fontWeight: 600 }}>
-                  Select input token (KAV or ETH), enter amount, and click <strong>Approve & Swap</strong>. Click here to jump straight to live execution!
+                  Set the tokens. Set the amount. Let the protocol do the rest. Click here to jump straight to live execution!
                 </p>
               </div>
 
@@ -567,7 +572,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 }}
                 style={{ marginTop: '20px', width: '100%', justifyContent: 'center', fontSize: '0.95rem', padding: '12px' }}
               >
-                <span>REDIRECT TO SWAP EXECUTION</span>
+                <span>SWAP NOW</span>
                 <ArrowRight size={18} />
               </button>
             </div>
@@ -594,7 +599,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   4. SUBMIT REVIEWS
                 </h3>
                 <p style={{ fontSize: '0.88rem', color: '#555', lineHeight: '1.5' }}>
-                  After executing your first swap, share your experience! Feedback helps improve liquidity, UI performance, and AMM mechanics.
+                  After executing your first swap, share your experience! Feedback helps improve liquidity and AMM mechanics.
                 </p>
               </div>
               <button
@@ -607,6 +612,24 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Bottom Tagline Banner */}
+      <div
+        className="sharp-card-sm"
+        style={{
+          textAlign: 'center',
+          backgroundColor: '#450C3F',
+          color: '#FCECD8',
+          padding: '18px 24px',
+          marginTop: '32px',
+          boxShadow: '4px 4px 0px #165823',
+          border: '2px solid #450C3F'
+        }}
+      >
+        <span style={{ fontSize: '1.15rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          “Built on Math. Secured by Code. Controlled by You.”
+        </span>
       </div>
 
       {/* Feedback Review Banner */}

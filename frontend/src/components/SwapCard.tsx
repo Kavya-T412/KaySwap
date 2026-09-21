@@ -90,8 +90,8 @@ export const SwapCard: React.FC<SwapCardProps> = ({
   return (
     <div className="sharp-card" style={{ maxWidth: '480px', margin: '0 auto' }}>
       {/* Header & Settings */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h2 style={{ fontSize: '1.4rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+        <h2 style={{ fontSize: '1.4rem', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>
           SWAP <span style={{ color: '#165823' }}>TOKENS</span>
         </h2>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -116,6 +116,9 @@ export const SwapCard: React.FC<SwapCardProps> = ({
           </button>
         </div>
       </div>
+      <p style={{ fontSize: '0.85rem', color: '#450C3F', opacity: 0.8, marginTop: 0, marginBottom: '20px', fontWeight: 600, fontStyle: 'italic' }}>
+        “Set the tokens. Set the amount. Let the protocol do the rest.”
+      </p>
 
       {/* Slippage Settings Panel */}
       {showSettings && (

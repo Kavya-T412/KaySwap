@@ -38,11 +38,16 @@ export const TokenomicsCard: React.FC<TokenomicsCardProps> = ({ kaySwap, isAuthe
 
   return (
     <div className="sharp-card" style={{ maxWidth: '600px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-        <img src={logoImg} alt="KAV" style={{ width: '32px', height: '32px' }} />
-        <h2 style={{ fontSize: '1.4rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-          KAVYA TOKEN <span style={{ color: '#165823' }}>TOKENOMICS & FAUCET</span>
-        </h2>
+      <div style={{ marginBottom: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <img src={logoImg} alt="KAV" style={{ width: '32px', height: '32px' }} />
+          <h2 style={{ fontSize: '1.4rem', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>
+            KAVYA TOKEN <span style={{ color: '#165823' }}>TOKENOMICS & FAUCET</span>
+          </h2>
+        </div>
+        <p style={{ fontSize: '0.85rem', color: '#450C3F', opacity: 0.8, margin: '6px 0 0 44px', fontWeight: 600, fontStyle: 'italic' }}>
+          “Know the Supply. Understand the Economy.”
+        </p>
       </div>
 
       {/* Supply Progress & Key Metrics */}
@@ -109,12 +114,15 @@ export const TokenomicsCard: React.FC<TokenomicsCardProps> = ({ kaySwap, isAuthe
           marginBottom: '24px'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
           <Gift size={22} style={{ color: '#165823' }} />
-          <h3 style={{ fontSize: '1.1rem', textTransform: 'uppercase' }}>SEPOLIA KAV FAUCET</h3>
+          <h3 style={{ fontSize: '1.1rem', textTransform: 'uppercase', margin: 0 }}>SEPOLIA KAV FAUCET</h3>
         </div>
+        <p style={{ fontSize: '0.85rem', color: '#165823', fontWeight: 700, margin: '0 0 8px 0', fontStyle: 'italic' }}>
+          “Need Test KAV? Get Funded. Start Swapping.”
+        </p>
         <p style={{ fontSize: '0.85rem', marginBottom: '14px', lineHeight: '1.4' }}>
-          Need test tokens to test swapping or providing liquidity on Sepolia? Claim <strong>1,000 KAV</strong> instantly every 24 hours.
+          Claim <strong>1,000 KAV</strong> testnet tokens instantly every 24 hours to swap or pool on Sepolia.
         </p>
 
         <button

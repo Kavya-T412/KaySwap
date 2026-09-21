@@ -189,6 +189,9 @@ export function App() {
       >
         <div>
           <strong style={{ textTransform: 'uppercase' }}>KAYSWAP AMM DEX</strong> &bull; Sepolia Testnet
+          <div style={{ fontSize: '0.78rem', opacity: 0.85, fontStyle: 'italic', marginTop: '2px', fontWeight: 600 }}>
+            “Built on Math. Secured by Code. Controlled by You.”
+          </div>
         </div>
 
         <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>

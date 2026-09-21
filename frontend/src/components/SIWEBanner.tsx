@@ -51,12 +51,12 @@ export const SIWEBanner: React.FC<SIWEBannerProps> = ({
         </div>
         <div>
           <h3 style={{ color: '#FCECD8', fontSize: '1.15rem', marginBottom: '4px', textTransform: 'uppercase' }}>
-            {isSessionExpired ? 'SIWE SESSION EXPIRED (15-MIN SECURITY TIMEOUT)' : 'SIGNATURE VERIFICATION REQUIRED'}
+            {isSessionExpired ? 'SIWE SESSION EXPIRED' : 'SIGN IN WITH YOUR WALLET. NOT YOUR PASSWORD.'}
           </h3>
           <p style={{ color: '#FCECD8', opacity: 0.9, fontSize: '0.88rem', margin: 0 }}>
             {isSessionExpired
               ? 'Your 15-minute SIWE security verification expired and automatically disconnected. Please sign the SIWE message to re-authenticate.'
-              : 'Please sign the SIWE message through your connected wallet to authenticate your Sepolia trading session.'}
+              : 'Sign in with your wallet, not your password. Authenticate your Sepolia trading session via cryptographic signature.'}
           </p>
         </div>
       </div>

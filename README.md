@@ -1,10 +1,10 @@
-# KaySwap | Sharp Decentralized Exchange on Sepolia
+# KaySwapp | Sharp Decentralized Exchange on Sepolia
 
 <p align="center">
   <img src="./frontend/src/KaySwap.png" alt="KaySwap Logo" width="120" />
 </p>
 
-**KaySwap** is a Web3 Decentralized Exchange (DEX) and Automated Market Maker (AMM) application designed for swapping **Kavya Token (KAV)** with **ETH** on the Ethereum **Sepolia Testnet**.
+**KaySwapp** is a Web3 Decentralized Exchange (DEX) and Automated Market Maker (AMM) application designed for swapping **Kavya Token (KAV)** with **ETH** on the Ethereum **Sepolia Testnet**.
 
 Built with modern Web3 standards, KaySwap features constant-product liquidity pool dynamics ($x \cdot y = k$), Sign-In With Ethereum (SIWE) authentication with 15-minute auto-expiry.
 

@@ -89,6 +89,16 @@ export const LiquidityCard: React.FC<LiquidityCardProps> = ({ kaySwap, isAuthent
 
   return (
     <div className="sharp-card" style={{ maxWidth: '540px', margin: '0 auto' }}>
+      {/* Section Header */}
+      <div style={{ marginBottom: '18px' }}>
+        <h2 style={{ fontSize: '1.4rem', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>
+          LIQUIDITY <span style={{ color: '#165823' }}>POOL</span>
+        </h2>
+        <p style={{ fontSize: '0.85rem', color: '#450C3F', opacity: 0.8, margin: '4px 0 0 0', fontWeight: 600, fontStyle: 'italic' }}>
+          “Don’t Just Trade Liquidity. Provide It.”
+        </p>
+      </div>
+
       {/* Tab Controls */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
         <button

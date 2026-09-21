@@ -62,16 +62,21 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: '20px',
+            marginBottom: '16px',
             borderBottom: '2px solid #450C3F',
             paddingBottom: '12px',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <History size={22} color="#165823" />
-            <h2 style={{ margin: 0, fontSize: '1.25rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              TRANSACTION HISTORY
-            </h2>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <History size={22} color="#165823" />
+              <h2 style={{ margin: 0, fontSize: '1.25rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                TRANSACTION HISTORY
+              </h2>
+            </div>
+            <p style={{ fontSize: '0.8rem', color: '#450C3F', opacity: 0.8, margin: '4px 0 0 32px', fontWeight: 600, fontStyle: 'italic' }}>
+              “Every Swap Leaves a Trail. Verify It On-Chain.”
+            </p>
           </div>
           <button
             onClick={onClose}
