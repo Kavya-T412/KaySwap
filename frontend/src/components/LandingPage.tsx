@@ -33,35 +33,59 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   totalReviews,
   isDeployer,
 }) => {
-  const featuresScrollRef = useRef<HTMLDivElement>(null);
-  const guideScrollRef = useRef<HTMLDivElement>(null);
+  // Outer sticky section wrapper refs
+  const featOuterRef = useRef<HTMLDivElement>(null);
+  const featTrackRef = useRef<HTMLDivElement>(null);
 
-  // Smooth horizontal scrolling with release to vertical page scroll at boundaries
+  const guideOuterRef = useRef<HTMLDivElement>(null);
+  const guideTrackRef = useRef<HTMLDivElement>(null);
+
+  // Sync vertical page scrolling to horizontal card translation for Section 1 and Section 2
   useEffect(() => {
-    const handleWheelScroll = (ref: React.RefObject<HTMLDivElement>) => (e: WheelEvent) => {
-      if (!ref.current) return;
-      const { scrollLeft, scrollWidth, clientWidth } = ref.current;
-      const canScrollRight = scrollLeft < scrollWidth - clientWidth - 10;
-      const canScrollLeft = scrollLeft > 10;
+    let animationFrameId: number;
 
-      if ((e.deltaY > 0 && canScrollRight) || (e.deltaY < 0 && canScrollLeft)) {
-        e.preventDefault();
-        ref.current.scrollBy({ left: e.deltaY * 1.5, behavior: 'smooth' });
-      }
+    const handleWindowScroll = () => {
+      animationFrameId = requestAnimationFrame(() => {
+        // Section 1: Features
+        if (featOuterRef.current && featTrackRef.current) {
+          const rect = featOuterRef.current.getBoundingClientRect();
+          const stickyTopOffset = 80;
+          const sectionHeight = featOuterRef.current.offsetHeight;
+          const windowHeight = window.innerHeight;
+          const maxScrollableDistance = sectionHeight - windowHeight;
+
+          if (maxScrollableDistance > 0) {
+            const currentDistance = stickyTopOffset - rect.top;
+            const progress = Math.max(0, Math.min(1, currentDistance / maxScrollableDistance));
+            const maxTrackScroll = featTrackRef.current.scrollWidth - featTrackRef.current.clientWidth;
+            featTrackRef.current.scrollLeft = progress * maxTrackScroll;
+          }
+        }
+
+        // Section 2: User Guide & How to Swap
+        if (guideOuterRef.current && guideTrackRef.current) {
+          const rect = guideOuterRef.current.getBoundingClientRect();
+          const stickyTopOffset = 80;
+          const sectionHeight = guideOuterRef.current.offsetHeight;
+          const windowHeight = window.innerHeight;
+          const maxScrollableDistance = sectionHeight - windowHeight;
+
+          if (maxScrollableDistance > 0) {
+            const currentDistance = stickyTopOffset - rect.top;
+            const progress = Math.max(0, Math.min(1, currentDistance / maxScrollableDistance));
+            const maxTrackScroll = guideTrackRef.current.scrollWidth - guideTrackRef.current.clientWidth;
+            guideTrackRef.current.scrollLeft = progress * maxTrackScroll;
+          }
+        }
+      });
     };
 
-    const featContainer = featuresScrollRef.current;
-    const guideContainer = guideScrollRef.current;
-
-    const featListener = handleWheelScroll(featuresScrollRef);
-    const guideListener = handleWheelScroll(guideScrollRef);
-
-    if (featContainer) featContainer.addEventListener('wheel', featListener, { passive: false });
-    if (guideContainer) guideContainer.addEventListener('wheel', guideListener, { passive: false });
+    window.addEventListener('scroll', handleWindowScroll, { passive: true });
+    handleWindowScroll(); // Initial position check
 
     return () => {
-      if (featContainer) featContainer.removeEventListener('wheel', featListener);
-      if (guideContainer) guideContainer.removeEventListener('wheel', guideListener);
+      window.removeEventListener('scroll', handleWindowScroll);
+      cancelAnimationFrame(animationFrameId);
     };
   }, []);
 
@@ -74,9 +98,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '56px', paddingBottom: '32px', width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', paddingBottom: '32px', width: '100%' }}>
       {/* ------------------------------------------------------------- */}
-      {/* UNIFIED HOME PAGE HERO (FULL PAGE CANVAS WITHOUT HEAVY DIVISIONS) */}
+      {/* UNIFIED HOME PAGE HERO                                        */}
       {/* ------------------------------------------------------------- */}
       <section
         style={{
@@ -172,472 +196,472 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       </section>
 
       {/* ------------------------------------------------------------- */}
-      {/* SECTION 1: PLATFORM FEATURES (CONTINUOUS SMOOTH HORIZONTAL SCROLL) */}
+      {/* SECTION 1: STICKY VERTICAL-TO-HORIZONTAL SCROLL FEATURES      */}
       {/* ------------------------------------------------------------- */}
-      <section style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '12px' }}>
-          <div>
-            <div className="sharp-badge sharp-badge-plum" style={{ marginBottom: '6px' }}>
-              SECTION 1 &bull; APPLICATION CAPABILITIES
-            </div>
-            <h2 style={{ fontSize: '2rem', textTransform: 'uppercase', letterSpacing: '0.02em', margin: 0 }}>
-              APPLICATION <span style={{ color: '#165823' }}>CAPABILITIES</span>
-            </h2>
-          </div>
-
-          {/* Scroll Navigation Buttons */}
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button
-              className="sharp-button-outline"
-              onClick={() => scrollLeft(featuresScrollRef)}
-              title="Scroll Left"
-              style={{ padding: '8px 14px' }}
-            >
-              <ChevronLeft size={20} />
-            </button>
-            <button
-              className="sharp-button-outline"
-              onClick={() => scrollRight(featuresScrollRef)}
-              title="Scroll Right"
-              style={{ padding: '8px 14px' }}
-            >
-              <ChevronRight size={20} />
-            </button>
-          </div>
-        </div>
-
-        {/* Horizontal Features Track (NO SEPARATION SCROLLBAR, SMOOTH HORIZONTAL SCROLL) */}
-        <div
-          ref={featuresScrollRef}
-          className="no-scrollbar"
-          style={{
-            display: 'flex',
-            gap: '24px',
-            overflowX: 'auto',
-            paddingBottom: '8px',
-            scrollSnapType: 'x mandatory',
-            scrollBehavior: 'smooth',
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none'
-          }}
-        >
-          {/* Feature Card 1: Instant Swaps */}
-          <div
-            className="sharp-card"
-            style={{
-              minWidth: '340px',
-              maxWidth: '360px',
-              flex: '0 0 auto',
-              scrollSnapAlign: 'start',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              border: '3px solid #450C3F'
-            }}
-          >
+      <div ref={featOuterRef} style={{ position: 'relative', height: '220vh' }}>
+        <div style={{ position: 'sticky', top: '80px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '12px' }}>
             <div>
-              <div style={{ backgroundColor: '#165823', color: '#ffffff', width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px', border: '2px solid #450C3F' }}>
-                <ArrowLeftRight size={26} />
+              <div className="sharp-badge sharp-badge-plum" style={{ marginBottom: '6px' }}>
+                SECTION 1 &bull; APPLICATION CAPABILITIES (DRIVEN BY VERTICAL SCROLL)
               </div>
-              <h3 style={{ fontSize: '1.25rem', textTransform: 'uppercase', marginBottom: '8px' }}>
-                INSTANT KAV ↔ ETH SWAPS
-              </h3>
-              <p style={{ fontSize: '0.92rem', color: '#555', lineHeight: '1.5' }}>
-                Swap KAV tokens for ETH and ETH for KAV with exact algorithmic output quotes, configurable slippage bounds (0.1% to 1.0%), and instant on-chain execution.
-              </p>
-            </div>
-            <button
-              className="sharp-button-secondary"
-              onClick={() => onNavigateTab('swap')}
-              style={{ marginTop: '24px', width: '100%', fontSize: '0.9rem', justifyContent: 'center' }}
-            >
-              <span>EXECUTE SWAP NOW</span>
-              <ArrowRight size={16} />
-            </button>
-          </div>
-
-          {/* Feature Card 2: Liquidity Pools */}
-          <div
-            className="sharp-card"
-            style={{
-              minWidth: '340px',
-              maxWidth: '360px',
-              flex: '0 0 auto',
-              scrollSnapAlign: 'start',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              border: '3px solid #450C3F'
-            }}
-          >
-            <div>
-              <div style={{ backgroundColor: '#450C3F', color: '#ffffff', width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px', border: '2px solid #450C3F' }}>
-                <Layers size={26} />
-              </div>
-              <h3 style={{ fontSize: '1.25rem', textTransform: 'uppercase', marginBottom: '8px' }}>
-                LIQUIDITY POOLS & LP TOKENS
-              </h3>
-              <p style={{ fontSize: '0.92rem', color: '#555', lineHeight: '1.5' }}>
-                Deposit liquidity into the KAV/ETH pair to earn a proportional share of trading fees. Mint KAY-LP ERC20 tokens and redeem reserves at any time.
-              </p>
-            </div>
-            <button
-              className="sharp-button-outline"
-              onClick={() => onNavigateTab('liquidity')}
-              style={{ marginTop: '24px', width: '100%', fontSize: '0.9rem' }}
-            >
-              SUPPLY LIQUIDITY &rarr;
-            </button>
-          </div>
-
-          {/* Feature Card 3: SIWE Security */}
-          <div
-            className="sharp-card"
-            style={{
-              minWidth: '340px',
-              maxWidth: '360px',
-              flex: '0 0 auto',
-              scrollSnapAlign: 'start',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              border: '3px solid #450C3F'
-            }}
-          >
-            <div>
-              <div style={{ backgroundColor: '#165823', color: '#ffffff', width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px', border: '2px solid #450C3F' }}>
-                <ShieldCheck size={26} />
-              </div>
-              <h3 style={{ fontSize: '1.25rem', textTransform: 'uppercase', marginBottom: '8px' }}>
-                SIWE SECURITY & TIMEOUT
-              </h3>
-              <p style={{ fontSize: '0.92rem', color: '#555', lineHeight: '1.5' }}>
-                Sign-In with Ethereum (EIP-4361) verifies wallet ownership. Sessions automatically expire after 15 minutes, triggering an automatic wallet disconnect.
-              </p>
-            </div>
-            <div style={{ marginTop: '24px', fontSize: '0.85rem', fontWeight: 700, color: '#165823', padding: '10px', backgroundColor: '#FCECD8', border: '1px solid #450C3F', textAlign: 'center' }}>
-              AUTOMATIC SESSION PROTECTION
-            </div>
-          </div>
-
-          {/* Feature Card 4: Faucet & Tokenomics */}
-          <div
-            className="sharp-card"
-            style={{
-              minWidth: '340px',
-              maxWidth: '360px',
-              flex: '0 0 auto',
-              scrollSnapAlign: 'start',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              border: '3px solid #450C3F'
-            }}
-          >
-            <div>
-              <div style={{ backgroundColor: '#450C3F', color: '#ffffff', width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px', border: '2px solid #450C3F' }}>
-                <Coins size={26} />
-              </div>
-              <h3 style={{ fontSize: '1.25rem', textTransform: 'uppercase', marginBottom: '8px' }}>
-                TOKENOMICS & TEST FAUCET
-              </h3>
-              <p style={{ fontSize: '0.92rem', color: '#555', lineHeight: '1.5' }}>
-                KAV features a strict 1,000,000 hard supply cap. Claim 1,000 test KAV tokens every 24 hours from the built-in Sepolia faucet to start trading.
-              </p>
-            </div>
-            <button
-              className="sharp-button-outline"
-              onClick={() => onNavigateTab('tokenomics')}
-              style={{ marginTop: '24px', width: '100%', fontSize: '0.9rem' }}
-            >
-              CLAIM FAUCET &rarr;
-            </button>
-          </div>
-
-          {/* Feature Card 5: Real-Time Audit Logs */}
-          <div
-            className="sharp-card"
-            style={{
-              minWidth: '340px',
-              maxWidth: '360px',
-              flex: '0 0 auto',
-              scrollSnapAlign: 'start',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              border: '3px solid #450C3F'
-            }}
-          >
-            <div>
-              <div style={{ backgroundColor: '#165823', color: '#ffffff', width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px', border: '2px solid #450C3F' }}>
-                <History size={26} />
-              </div>
-              <h3 style={{ fontSize: '1.25rem', textTransform: 'uppercase', marginBottom: '8px' }}>
-                TRANSACTION HISTORY & AUDIT LOGS
-              </h3>
-              <p style={{ fontSize: '0.92rem', color: '#555', lineHeight: '1.5' }}>
-                Track every approve, swap, and liquidity action with status badges, execution timestamps, and direct Sepolia Etherscan block explorer links.
-              </p>
-            </div>
-            <div style={{ marginTop: '24px', fontSize: '0.85rem', fontWeight: 700, color: '#450C3F', padding: '10px', backgroundColor: '#FCECD8', border: '1px solid #450C3F', textAlign: 'center' }}>
-              LOGGED ON-CHAIN VERIFICATION
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ------------------------------------------------------------- */}
-      {/* SECTION 2: HOW TO USE & HOW TO SWAP SESSION (DIRECT EXECUTION REDIRECT) */}
-      {/* ------------------------------------------------------------- */}
-      <section style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '12px' }}>
-          <div>
-            <div className="sharp-badge sharp-badge-green" style={{ marginBottom: '6px' }}>
-              SECTION 2 &bull; USER ONBOARDING & HOW TO SWAP
-            </div>
-            <h2 style={{ fontSize: '2rem', textTransform: 'uppercase', letterSpacing: '0.02em', margin: 0 }}>
-              HOW TO USE KAYSWAP <span style={{ color: '#450C3F' }}>& REVIEWS</span>
-            </h2>
-          </div>
-
-          {/* Scroll Navigation Buttons */}
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button
-              className="sharp-button-outline"
-              onClick={() => scrollLeft(guideScrollRef)}
-              title="Scroll Left"
-              style={{ padding: '8px 14px' }}
-            >
-              <ChevronLeft size={20} />
-            </button>
-            <button
-              className="sharp-button-outline"
-              onClick={() => scrollRight(guideScrollRef)}
-              title="Scroll Right"
-              style={{ padding: '8px 14px' }}
-            >
-              <ChevronRight size={20} />
-            </button>
-          </div>
-        </div>
-
-        {/* Horizontal Guide Track */}
-        <div
-          ref={guideScrollRef}
-          className="no-scrollbar"
-          style={{
-            display: 'flex',
-            gap: '24px',
-            overflowX: 'auto',
-            paddingBottom: '8px',
-            scrollSnapType: 'x mandatory',
-            scrollBehavior: 'smooth',
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none'
-          }}
-        >
-          {/* Guide Step 1 */}
-          <div
-            className="sharp-card"
-            style={{
-              minWidth: '320px',
-              maxWidth: '340px',
-              flex: '0 0 auto',
-              scrollSnapAlign: 'start',
-              backgroundColor: '#ffffff',
-              border: '3px solid #450C3F',
-              boxShadow: '4px 4px 0px #450C3F',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between'
-            }}
-          >
-            <div>
-              <span className="sharp-badge sharp-badge-plum" style={{ marginBottom: '12px' }}>STEP 01</span>
-              <h3 style={{ fontSize: '1.2rem', textTransform: 'uppercase', marginBottom: '8px' }}>
-                1. CONNECT & SIGN SIWE
-              </h3>
-              <p style={{ fontSize: '0.88rem', color: '#555', lineHeight: '1.5' }}>
-                Click <strong>Connect Wallet</strong> in the header to connect on Sepolia. Then sign the cryptographic SIWE message to authenticate your trading session.
-              </p>
-            </div>
-            <button
-              className="sharp-button-outline"
-              onClick={() => onNavigateTab('swap')}
-              style={{ marginTop: '20px', fontSize: '0.85rem', padding: '10px' }}
-            >
-              GO TO SWAP EXECUTION &rarr;
-            </button>
-          </div>
-
-          {/* Guide Step 2 */}
-          <div
-            className="sharp-card"
-            style={{
-              minWidth: '320px',
-              maxWidth: '340px',
-              flex: '0 0 auto',
-              scrollSnapAlign: 'start',
-              backgroundColor: '#ffffff',
-              border: '3px solid #450C3F',
-              boxShadow: '4px 4px 0px #450C3F',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between'
-            }}
-          >
-            <div>
-              <span className="sharp-badge sharp-badge-green" style={{ marginBottom: '12px' }}>STEP 02</span>
-              <h3 style={{ fontSize: '1.2rem', textTransform: 'uppercase', marginBottom: '8px' }}>
-                2. CLAIM TEST FAUCET
-              </h3>
-              <p style={{ fontSize: '0.88rem', color: '#555', lineHeight: '1.5' }}>
-                Navigate to <strong>Tokenomics & Faucet</strong> tab. Click <strong>Claim 1,000 KAV Faucet</strong> to receive test tokens directly to your wallet.
-              </p>
-            </div>
-            <button
-              className="sharp-button-outline"
-              onClick={() => onNavigateTab('tokenomics')}
-              style={{ marginTop: '20px', fontSize: '0.85rem', padding: '10px' }}
-            >
-              GO TO FAUCET &rarr;
-            </button>
-          </div>
-
-          {/* Guide Step 3: HOW TO SWAP SESSION - REDIRECTS DIRECTLY TO SWAP EXECUTION */}
-          <div
-            className="sharp-card"
-            onClick={() => onNavigateTab('swap')}
-            style={{
-              minWidth: '340px',
-              maxWidth: '360px',
-              flex: '0 0 auto',
-              scrollSnapAlign: 'start',
-              backgroundColor: '#FCECD8',
-              border: '3px solid #165823',
-              boxShadow: '6px 6px 0px #165823',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              cursor: 'pointer'
-            }}
-          >
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                <span className="sharp-badge sharp-badge-green">HOW TO SWAP SESSION &bull; STEP 03</span>
-                <PlayCircle size={22} color="#165823" />
-              </div>
-              <h3 style={{ fontSize: '1.3rem', textTransform: 'uppercase', marginBottom: '8px', color: '#165823' }}>
-                3. EXECUTE TOKEN SWAP
-              </h3>
-              <p style={{ fontSize: '0.9rem', color: '#450C3F', lineHeight: '1.5', fontWeight: 600 }}>
-                Select input token (KAV or ETH), enter amount, and click <strong>Approve & Swap</strong>. Click here to jump straight to live execution!
-              </p>
+              <h2 style={{ fontSize: '2rem', textTransform: 'uppercase', letterSpacing: '0.02em', margin: 0 }}>
+                APPLICATION <span style={{ color: '#165823' }}>CAPABILITIES</span>
+              </h2>
             </div>
 
-            {/* Direct Execution Redirect CTA */}
-            <button
-              className="sharp-button-secondary"
-              onClick={(e) => {
-                e.stopPropagation();
-                onNavigateTab('swap');
-              }}
-              style={{ marginTop: '20px', width: '100%', justifyContent: 'center', fontSize: '0.95rem', padding: '12px' }}
-            >
-              <span>REDIRECT TO SWAP EXECUTION</span>
-              <ArrowRight size={18} />
-            </button>
-          </div>
-
-          {/* Guide Step 4 */}
-          <div
-            className="sharp-card"
-            style={{
-              minWidth: '320px',
-              maxWidth: '340px',
-              flex: '0 0 auto',
-              scrollSnapAlign: 'start',
-              backgroundColor: '#ffffff',
-              border: '3px solid #450C3F',
-              boxShadow: '4px 4px 0px #450C3F',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between'
-            }}
-          >
-            <div>
-              <span className="sharp-badge sharp-badge-plum" style={{ marginBottom: '12px' }}>STEP 04</span>
-              <h3 style={{ fontSize: '1.2rem', textTransform: 'uppercase', marginBottom: '8px' }}>
-                4. SUBMIT REVIEWS
-              </h3>
-              <p style={{ fontSize: '0.88rem', color: '#555', lineHeight: '1.5' }}>
-                After executing your first swap, share your experience! Feedback helps improve liquidity, UI performance, and AMM mechanics.
-              </p>
-            </div>
-            <button
-              className="sharp-button-outline"
-              onClick={onOpenFeedback}
-              style={{ marginTop: '20px', fontSize: '0.85rem', padding: '10px' }}
-            >
-              GIVE REVIEW &rarr;
-            </button>
-          </div>
-        </div>
-
-        {/* Feedback Review Banner */}
-        <div
-          className="sharp-card"
-          style={{
-            backgroundColor: '#FCECD8',
-            border: '3px solid #450C3F',
-            boxShadow: '6px 6px 0px #450C3F',
-            padding: '24px',
-            marginTop: '8px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '16px'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ backgroundColor: '#450C3F', color: '#ffffff', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <MessageSquare size={28} />
-            </div>
-            <div>
-              <h3 style={{ fontSize: '1.2rem', textTransform: 'uppercase', marginBottom: '4px' }}>
-                WE VALUE YOUR FEEDBACK & REVIEWS
-              </h3>
-              <p style={{ fontSize: '0.9rem', color: '#450C3F', margin: 0 }}>
-                Community Rating: <strong>{averageRating} / 5.0 Stars</strong> ({totalReviews} {totalReviews === 1 ? 'review' : 'reviews'} logged).
-              </p>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            <button
-              className="sharp-button-secondary"
-              onClick={onOpenFeedback}
-              style={{ fontSize: '0.9rem', padding: '10px 18px' }}
-            >
-              <Star size={16} />
-              <span>GIVE FEEDBACK</span>
-            </button>
-
-            {/* ADMIN LOGS BUTTON - STRICTLY RENDERED ONLY FOR CONTRACT DEPLOYER */}
-            {isDeployer && (
+            {/* Manual Controls */}
+            <div style={{ display: 'flex', gap: '8px' }}>
               <button
                 className="sharp-button-outline"
-                onClick={onOpenAdmin}
-                title="Contract Deployer Audit Logs"
-                style={{ fontSize: '0.85rem', padding: '10px 14px', backgroundColor: '#165823', color: '#ffffff', borderColor: '#165823' }}
+                onClick={() => scrollLeft(featTrackRef)}
+                title="Scroll Left"
+                style={{ padding: '8px 14px' }}
               >
-                <span>ADMIN LOGS</span>
+                <ChevronLeft size={20} />
               </button>
-            )}
+              <button
+                className="sharp-button-outline"
+                onClick={() => scrollRight(featTrackRef)}
+                title="Scroll Right"
+                style={{ padding: '8px 14px' }}
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
+          </div>
+
+          {/* Horizontal Cards Track */}
+          <div
+            ref={featTrackRef}
+            className="no-scrollbar"
+            style={{
+              display: 'flex',
+              gap: '24px',
+              overflowX: 'auto',
+              paddingBottom: '8px',
+              scrollSnapType: 'x mandatory',
+              scrollBehavior: 'smooth'
+            }}
+          >
+            {/* Feature Card 1: Instant Swaps */}
+            <div
+              className="sharp-card"
+              style={{
+                minWidth: '340px',
+                maxWidth: '360px',
+                flex: '0 0 auto',
+                scrollSnapAlign: 'start',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                border: '3px solid #450C3F'
+              }}
+            >
+              <div>
+                <div style={{ backgroundColor: '#165823', color: '#ffffff', width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px', border: '2px solid #450C3F' }}>
+                  <ArrowLeftRight size={26} />
+                </div>
+                <h3 style={{ fontSize: '1.25rem', textTransform: 'uppercase', marginBottom: '8px' }}>
+                  INSTANT KAV ↔ ETH SWAPS
+                </h3>
+                <p style={{ fontSize: '0.92rem', color: '#555', lineHeight: '1.5' }}>
+                  Swap KAV tokens for ETH and ETH for KAV with exact algorithmic output quotes, configurable slippage bounds (0.1% to 1.0%), and instant on-chain execution.
+                </p>
+              </div>
+              <button
+                className="sharp-button-secondary"
+                onClick={() => onNavigateTab('swap')}
+                style={{ marginTop: '24px', width: '100%', fontSize: '0.9rem', justifyContent: 'center' }}
+              >
+                <span>EXECUTE SWAP NOW</span>
+                <ArrowRight size={16} />
+              </button>
+            </div>
+
+            {/* Feature Card 2: Liquidity Pools */}
+            <div
+              className="sharp-card"
+              style={{
+                minWidth: '340px',
+                maxWidth: '360px',
+                flex: '0 0 auto',
+                scrollSnapAlign: 'start',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                border: '3px solid #450C3F'
+              }}
+            >
+              <div>
+                <div style={{ backgroundColor: '#450C3F', color: '#ffffff', width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px', border: '2px solid #450C3F' }}>
+                  <Layers size={26} />
+                </div>
+                <h3 style={{ fontSize: '1.25rem', textTransform: 'uppercase', marginBottom: '8px' }}>
+                  LIQUIDITY POOLS & LP TOKENS
+                </h3>
+                <p style={{ fontSize: '0.92rem', color: '#555', lineHeight: '1.5' }}>
+                  Deposit liquidity into the KAV/ETH pair to earn a proportional share of trading fees. Mint KAY-LP ERC20 tokens and redeem reserves at any time.
+                </p>
+              </div>
+              <button
+                className="sharp-button-outline"
+                onClick={() => onNavigateTab('liquidity')}
+                style={{ marginTop: '24px', width: '100%', fontSize: '0.9rem' }}
+              >
+                SUPPLY LIQUIDITY &rarr;
+              </button>
+            </div>
+
+            {/* Feature Card 3: SIWE Security */}
+            <div
+              className="sharp-card"
+              style={{
+                minWidth: '340px',
+                maxWidth: '360px',
+                flex: '0 0 auto',
+                scrollSnapAlign: 'start',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                border: '3px solid #450C3F'
+              }}
+            >
+              <div>
+                <div style={{ backgroundColor: '#165823', color: '#ffffff', width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px', border: '2px solid #450C3F' }}>
+                  <ShieldCheck size={26} />
+                </div>
+                <h3 style={{ fontSize: '1.25rem', textTransform: 'uppercase', marginBottom: '8px' }}>
+                  SIWE SECURITY & TIMEOUT
+                </h3>
+                <p style={{ fontSize: '0.92rem', color: '#555', lineHeight: '1.5' }}>
+                  Sign-In with Ethereum (EIP-4361) verifies wallet ownership. Sessions automatically expire after 15 minutes, triggering an automatic wallet disconnect.
+                </p>
+              </div>
+              <div style={{ marginTop: '24px', fontSize: '0.85rem', fontWeight: 700, color: '#165823', padding: '10px', backgroundColor: '#FCECD8', border: '1px solid #450C3F', textAlign: 'center' }}>
+                AUTOMATIC SESSION PROTECTION
+              </div>
+            </div>
+
+            {/* Feature Card 4: Faucet & Tokenomics */}
+            <div
+              className="sharp-card"
+              style={{
+                minWidth: '340px',
+                maxWidth: '360px',
+                flex: '0 0 auto',
+                scrollSnapAlign: 'start',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                border: '3px solid #450C3F'
+              }}
+            >
+              <div>
+                <div style={{ backgroundColor: '#450C3F', color: '#ffffff', width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px', border: '2px solid #450C3F' }}>
+                  <Coins size={26} />
+                </div>
+                <h3 style={{ fontSize: '1.25rem', textTransform: 'uppercase', marginBottom: '8px' }}>
+                  TOKENOMICS & TEST FAUCET
+                </h3>
+                <p style={{ fontSize: '0.92rem', color: '#555', lineHeight: '1.5' }}>
+                  KAV features a strict 1,000,000 hard supply cap. Claim 1,000 test KAV tokens every 24 hours from the built-in Sepolia faucet to start trading.
+                </p>
+              </div>
+              <button
+                className="sharp-button-outline"
+                onClick={() => onNavigateTab('tokenomics')}
+                style={{ marginTop: '24px', width: '100%', fontSize: '0.9rem' }}
+              >
+                CLAIM FAUCET &rarr;
+              </button>
+            </div>
+
+            {/* Feature Card 5: Real-Time Audit Logs */}
+            <div
+              className="sharp-card"
+              style={{
+                minWidth: '340px',
+                maxWidth: '360px',
+                flex: '0 0 auto',
+                scrollSnapAlign: 'start',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                border: '3px solid #450C3F'
+              }}
+            >
+              <div>
+                <div style={{ backgroundColor: '#165823', color: '#ffffff', width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px', border: '2px solid #450C3F' }}>
+                  <History size={26} />
+                </div>
+                <h3 style={{ fontSize: '1.25rem', textTransform: 'uppercase', marginBottom: '8px' }}>
+                  TRANSACTION HISTORY & AUDIT LOGS
+                </h3>
+                <p style={{ fontSize: '0.92rem', color: '#555', lineHeight: '1.5' }}>
+                  Track every approve, swap, and liquidity action with status badges, execution timestamps, and direct Sepolia Etherscan block explorer links.
+                </p>
+              </div>
+              <div style={{ marginTop: '24px', fontSize: '0.85rem', fontWeight: 700, color: '#450C3F', padding: '10px', backgroundColor: '#FCECD8', border: '1px solid #450C3F', textAlign: 'center' }}>
+                LOGGED ON-CHAIN VERIFICATION
+              </div>
+            </div>
           </div>
         </div>
-      </section>
+      </div>
+
+      {/* ------------------------------------------------------------- */}
+      {/* SECTION 2: STICKY VERTICAL-TO-HORIZONTAL SCROLL GUIDE        */}
+      {/* ------------------------------------------------------------- */}
+      <div ref={guideOuterRef} style={{ position: 'relative', height: '220vh' }}>
+        <div style={{ position: 'sticky', top: '80px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '12px' }}>
+            <div>
+              <div className="sharp-badge sharp-badge-green" style={{ marginBottom: '6px' }}>
+                SECTION 2 &bull; USER ONBOARDING & HOW TO SWAP
+              </div>
+              <h2 style={{ fontSize: '2rem', textTransform: 'uppercase', letterSpacing: '0.02em', margin: 0 }}>
+                HOW TO USE KAYSWAP <span style={{ color: '#450C3F' }}>& REVIEWS</span>
+              </h2>
+            </div>
+
+            {/* Manual Controls */}
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                className="sharp-button-outline"
+                onClick={() => scrollLeft(guideTrackRef)}
+                title="Scroll Left"
+                style={{ padding: '8px 14px' }}
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <button
+                className="sharp-button-outline"
+                onClick={() => scrollRight(guideTrackRef)}
+                title="Scroll Right"
+                style={{ padding: '8px 14px' }}
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
+          </div>
+
+          {/* Horizontal Guide Track */}
+          <div
+            ref={guideTrackRef}
+            className="no-scrollbar"
+            style={{
+              display: 'flex',
+              gap: '24px',
+              overflowX: 'auto',
+              paddingBottom: '8px',
+              scrollSnapType: 'x mandatory',
+              scrollBehavior: 'smooth'
+            }}
+          >
+            {/* Guide Step 1 */}
+            <div
+              className="sharp-card"
+              style={{
+                minWidth: '320px',
+                maxWidth: '340px',
+                flex: '0 0 auto',
+                scrollSnapAlign: 'start',
+                backgroundColor: '#ffffff',
+                border: '3px solid #450C3F',
+                boxShadow: '4px 4px 0px #450C3F',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between'
+              }}
+            >
+              <div>
+                <span className="sharp-badge sharp-badge-plum" style={{ marginBottom: '12px' }}>STEP 01</span>
+                <h3 style={{ fontSize: '1.2rem', textTransform: 'uppercase', marginBottom: '8px' }}>
+                  1. CONNECT & SIGN SIWE
+                </h3>
+                <p style={{ fontSize: '0.88rem', color: '#555', lineHeight: '1.5' }}>
+                  Click <strong>Connect Wallet</strong> in the header to connect on Sepolia. Then sign the cryptographic SIWE message to authenticate your trading session.
+                </p>
+              </div>
+              <button
+                className="sharp-button-outline"
+                onClick={() => onNavigateTab('swap')}
+                style={{ marginTop: '20px', fontSize: '0.85rem', padding: '10px' }}
+              >
+                GO TO SWAP EXECUTION &rarr;
+              </button>
+            </div>
+
+            {/* Guide Step 2 */}
+            <div
+              className="sharp-card"
+              style={{
+                minWidth: '320px',
+                maxWidth: '340px',
+                flex: '0 0 auto',
+                scrollSnapAlign: 'start',
+                backgroundColor: '#ffffff',
+                border: '3px solid #450C3F',
+                boxShadow: '4px 4px 0px #450C3F',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between'
+              }}
+            >
+              <div>
+                <span className="sharp-badge sharp-badge-green" style={{ marginBottom: '12px' }}>STEP 02</span>
+                <h3 style={{ fontSize: '1.2rem', textTransform: 'uppercase', marginBottom: '8px' }}>
+                  2. CLAIM TEST FAUCET
+                </h3>
+                <p style={{ fontSize: '0.88rem', color: '#555', lineHeight: '1.5' }}>
+                  Navigate to <strong>Tokenomics & Faucet</strong> tab. Click <strong>Claim 1,000 KAV Faucet</strong> to receive test tokens directly to your wallet.
+                </p>
+              </div>
+              <button
+                className="sharp-button-outline"
+                onClick={() => onNavigateTab('tokenomics')}
+                style={{ marginTop: '20px', fontSize: '0.85rem', padding: '10px' }}
+              >
+                GO TO FAUCET &rarr;
+              </button>
+            </div>
+
+            {/* Guide Step 3: HOW TO SWAP SESSION - REDIRECTS DIRECTLY TO SWAP EXECUTION */}
+            <div
+              className="sharp-card"
+              onClick={() => onNavigateTab('swap')}
+              style={{
+                minWidth: '340px',
+                maxWidth: '360px',
+                flex: '0 0 auto',
+                scrollSnapAlign: 'start',
+                backgroundColor: '#FCECD8',
+                border: '3px solid #165823',
+                boxShadow: '6px 6px 0px #165823',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                cursor: 'pointer'
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                  <span className="sharp-badge sharp-badge-green">HOW TO SWAP SESSION &bull; STEP 03</span>
+                  <PlayCircle size={22} color="#165823" />
+                </div>
+                <h3 style={{ fontSize: '1.3rem', textTransform: 'uppercase', marginBottom: '8px', color: '#165823' }}>
+                  3. EXECUTE TOKEN SWAP
+                </h3>
+                <p style={{ fontSize: '0.9rem', color: '#450C3F', lineHeight: '1.5', fontWeight: 600 }}>
+                  Select input token (KAV or ETH), enter amount, and click <strong>Approve & Swap</strong>. Click here to jump straight to live execution!
+                </p>
+              </div>
+
+              {/* Direct Execution Redirect CTA */}
+              <button
+                className="sharp-button-secondary"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onNavigateTab('swap');
+                }}
+                style={{ marginTop: '20px', width: '100%', justifyContent: 'center', fontSize: '0.95rem', padding: '12px' }}
+              >
+                <span>REDIRECT TO SWAP EXECUTION</span>
+                <ArrowRight size={18} />
+              </button>
+            </div>
+
+            {/* Guide Step 4 */}
+            <div
+              className="sharp-card"
+              style={{
+                minWidth: '320px',
+                maxWidth: '340px',
+                flex: '0 0 auto',
+                scrollSnapAlign: 'start',
+                backgroundColor: '#ffffff',
+                border: '3px solid #450C3F',
+                boxShadow: '4px 4px 0px #450C3F',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between'
+              }}
+            >
+              <div>
+                <span className="sharp-badge sharp-badge-plum" style={{ marginBottom: '12px' }}>STEP 04</span>
+                <h3 style={{ fontSize: '1.2rem', textTransform: 'uppercase', marginBottom: '8px' }}>
+                  4. SUBMIT REVIEWS
+                </h3>
+                <p style={{ fontSize: '0.88rem', color: '#555', lineHeight: '1.5' }}>
+                  After executing your first swap, share your experience! Feedback helps improve liquidity, UI performance, and AMM mechanics.
+                </p>
+              </div>
+              <button
+                className="sharp-button-outline"
+                onClick={onOpenFeedback}
+                style={{ marginTop: '20px', fontSize: '0.85rem', padding: '10px' }}
+              >
+                GIVE REVIEW &rarr;
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Feedback Review Banner */}
+      <div
+        className="sharp-card"
+        style={{
+          backgroundColor: '#FCECD8',
+          border: '3px solid #450C3F',
+          boxShadow: '6px 6px 0px #450C3F',
+          padding: '24px',
+          marginTop: '16px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '16px'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ backgroundColor: '#450C3F', color: '#ffffff', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <MessageSquare size={28} />
+          </div>
+          <div>
+            <h3 style={{ fontSize: '1.2rem', textTransform: 'uppercase', marginBottom: '4px' }}>
+              WE VALUE YOUR FEEDBACK & REVIEWS
+            </h3>
+            <p style={{ fontSize: '0.9rem', color: '#450C3F', margin: 0 }}>
+              Community Rating: <strong>{averageRating} / 5.0 Stars</strong> ({totalReviews} {totalReviews === 1 ? 'review' : 'reviews'} logged).
+            </p>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <button
+            className="sharp-button-secondary"
+            onClick={onOpenFeedback}
+            style={{ fontSize: '0.9rem', padding: '10px 18px' }}
+          >
+            <Star size={16} />
+            <span>GIVE FEEDBACK</span>
+          </button>
+
+          {/* ADMIN LOGS BUTTON - STRICTLY RENDERED ONLY FOR CONTRACT DEPLOYER */}
+          {isDeployer && (
+            <button
+              className="sharp-button-outline"
+              onClick={onOpenAdmin}
+              title="Contract Deployer Audit Logs"
+              style={{ fontSize: '0.85rem', padding: '10px 14px', backgroundColor: '#165823', color: '#ffffff', borderColor: '#165823' }}
+            >
+              <span>ADMIN LOGS</span>
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
