@@ -1,0 +1,12 @@
+# Node modules & build outputs
+node_modules/
+dist/
+build/
+.env
+.env.*
+
+# Hardhat ignition artifacts containing '#' in filenames
+smartcontracts/ignition/deployments/
+smartcontracts/artifacts/
+smartcontracts/cache/
+smartcontracts/types/
