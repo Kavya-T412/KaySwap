@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { getAllReviews, saveReview, clearAllReviews, getHealthStatus, initPostgres } from './dbService.js';
 
@@ -69,10 +70,11 @@ app.delete('/api/feedbacks', async (req, res) => {
 });
 
 // Serve frontend in production if built
-if (process.env.NODE_ENV === 'production' || process.env.SERVE_STATIC === 'true') {
-  app.use(express.static(path.join(__dirname, 'dist')));
+const distPath = path.join(__dirname, 'dist');
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
   app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+    res.sendFile(path.join(distPath, 'index.html'));
   });
 }
 

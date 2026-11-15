@@ -17,26 +17,44 @@ const pgPassword = process.env.PGPASSWORD || 'pass123';
 const pgHost = process.env.PGHOST || '127.0.0.1';
 const pgPort = parseInt(process.env.PGPORT || '5432', 10);
 const pgDatabase = process.env.PGDATABASE || 'kayswap';
+const databaseUrl = process.env.DATABASE_URL;
 
-// Primary Pool for 'kayswap' DB
-const kayswapPool = new Pool({
-  user: pgUser,
-  password: pgPassword,
-  host: pgHost,
-  port: pgPort,
-  database: pgDatabase,
-  connectionTimeoutMillis: 4000,
-});
+const isSslRequired =
+  process.env.PGSSLMODE === 'require' ||
+  process.env.NODE_ENV === 'production' ||
+  (databaseUrl && (databaseUrl.includes('render.com') || databaseUrl.includes('neon.tech') || databaseUrl.includes('supabase.co')));
 
-// Secondary Pool for default 'postgres' DB (to ensure psql queries without -d kayswap work seamlessly)
-const postgresPool = new Pool({
-  user: pgUser,
-  password: pgPassword,
-  host: pgHost,
-  port: pgPort,
-  database: 'postgres',
-  connectionTimeoutMillis: 4000,
-});
+const sslConfig = isSslRequired ? { rejectUnauthorized: false } : false;
+
+// Primary Pool for 'kayswap' DB (Supports cloud DATABASE_URL automatically on Render/Neon/Railway)
+const kayswapPool = databaseUrl
+  ? new Pool({
+      connectionString: databaseUrl,
+      ssl: sslConfig,
+      connectionTimeoutMillis: 5000,
+    })
+  : new Pool({
+      user: pgUser,
+      password: pgPassword,
+      host: pgHost,
+      port: pgPort,
+      database: pgDatabase,
+      ssl: sslConfig,
+      connectionTimeoutMillis: 4000,
+    });
+
+// Secondary Pool for default 'postgres' DB (optional local developer fallback)
+const postgresPool = databaseUrl
+  ? kayswapPool
+  : new Pool({
+      user: pgUser,
+      password: pgPassword,
+      host: pgHost,
+      port: pgPort,
+      database: 'postgres',
+      ssl: sslConfig,
+      connectionTimeoutMillis: 4000,
+    });
 
 kayswapPool.on('error', (err) => {
   console.warn('[DB] PostgreSQL (kayswap) pool notice:', err.message);

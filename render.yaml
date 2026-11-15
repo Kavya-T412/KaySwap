@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: kayswap
+    runtime: node
+    plan: free
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm run server
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: kayswap-db
+          property: connectionString
+      - key: PGSSLMODE
+        value: require
+
+databases:
+  - name: kayswap-db
+    databaseName: kayswap
+    user: postgres
+    plan: free
