@@ -19,5 +19,5 @@ services:
 databases:
   - name: kayswap-db
     databaseName: kayswap
-    user: postgres
+    user: kayswap_user
     plan: free
