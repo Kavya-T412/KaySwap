@@ -11,7 +11,7 @@ interface FeedbackModalProps {
     category: FeedbackItem['category'],
     swapTxHash?: string,
     isFirstSwap?: boolean
-  ) => boolean;
+  ) => Promise<boolean> | boolean;
   isFirstSwap?: boolean;
   swapTxHash?: string;
 }
@@ -30,9 +30,9 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const success = onSubmit(rating, comment, category, swapTxHash, isFirstSwap);
+    const success = await onSubmit(rating, comment, category, swapTxHash, isFirstSwap);
     if (success) {
       setSubmittedSuccess(true);
       setTimeout(() => {
@@ -59,60 +59,66 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
         justifyContent: 'center',
         padding: '16px',
       }}
-      onClick={onClose}
     >
       <div
         className="sharp-card"
         style={{
           width: '100%',
-          maxWidth: '500px',
+          maxWidth: '480px',
           backgroundColor: '#ffffff',
-          padding: '24px',
+          position: 'relative',
+          padding: '28px',
+          border: '4px solid #450C3F',
           boxShadow: '8px 8px 0px #450C3F',
         }}
-        onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div
+        {/* Close Button */}
+        <button
+          onClick={onClose}
           style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '20px',
-            borderBottom: '2px solid #450C3F',
-            paddingBottom: '12px',
+            position: 'absolute',
+            top: '16px',
+            right: '16px',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            color: '#450C3F',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <MessageSquare size={22} color="#165823" />
-            <div>
-              <h2 style={{ margin: 0, fontSize: '1.2rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                {isFirstSwap ? '🎉 FIRST SWAP COMPLETED!' : 'SHARE YOUR FEEDBACK'}
-              </h2>
-              <span className="mono" style={{ fontSize: '0.75rem', color: '#165823', fontWeight: 700 }}>
-                {isFirstSwap ? 'How was your experience trading on KaySwap?' : 'Help us improve KaySwap AMM'}
-              </span>
-            </div>
-          </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#450C3F' }}>
-            <X size={20} />
-          </button>
-        </div>
+          <X size={20} />
+        </button>
 
         {submittedSuccess ? (
-          <div style={{ textAlign: 'center', padding: '32px 16px' }}>
-            <CheckCircle2 size={48} color="#165823" style={{ margin: '0 auto 12px auto' }} />
-            <h3 style={{ fontSize: '1.3rem', color: '#165823', marginBottom: '8px' }}>THANK YOU FOR YOUR FEEDBACK!</h3>
-            <p style={{ fontSize: '0.9rem', color: '#450C3F' }}>
-              Your review has been recorded. It helps refine our decentralized liquidity experience.
+          <div style={{ textAlign: 'center', padding: '24px 0' }}>
+            <CheckCircle2 size={54} color="#165823" style={{ margin: '0 auto 12px auto' }} />
+            <h3 style={{ fontSize: '1.4rem', textTransform: 'uppercase', color: '#165823', margin: '0 0 8px 0' }}>
+              THANK YOU FOR YOUR FEEDBACK!
+            </h3>
+            <p style={{ fontSize: '0.9rem', color: '#555', margin: 0 }}>
+              Your feedback has been received and helps improve KaySwap!
             </p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <form onSubmit={handleSubmit}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+              <div style={{ backgroundColor: '#450C3F', color: '#ffffff', padding: '6px' }}>
+                <MessageSquare size={20} />
+              </div>
+              <h2 style={{ fontSize: '1.3rem', textTransform: 'uppercase', margin: 0, letterSpacing: '0.04em' }}>
+                {isFirstSwap ? 'FIRST SWAP COMPLETED!' : 'SHARE YOUR FEEDBACK'}
+              </h2>
+            </div>
+
+            <p style={{ fontSize: '0.85rem', color: '#555', margin: '0 0 20px 0', lineHeight: '1.4' }}>
+              {isFirstSwap
+                ? 'Congratulations on your first KAV swap! Please take 10 seconds to rate your experience.'
+                : 'Help us refine KaySwap AMM by leaving your rating and feedback.'}
+            </p>
+
             {/* Rating Stars */}
-            <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, marginBottom: '8px', textTransform: 'uppercase' }}>
-                Rating Score
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '6px' }}>
+                YOUR RATING:
               </label>
               <div style={{ display: 'flex', gap: '8px' }}>
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -121,82 +127,77 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
                     type="button"
                     onClick={() => setRating(star)}
                     style={{
-                      background: star <= rating ? '#450C3F' : '#ffffff',
-                      color: star <= rating ? '#FCECD8' : '#450C3F',
-                      border: '2px solid #450C3F',
-                      padding: '8px 12px',
+                      background: 'none',
+                      border: 'none',
                       cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      fontWeight: 700,
+                      padding: '4px',
                     }}
                   >
-                    <Star size={16} fill={star <= rating ? '#FCECD8' : 'none'} />
-                    <span>{star}</span>
+                    <Star
+                      size={26}
+                      fill={star <= rating ? '#450C3F' : 'transparent'}
+                      color="#450C3F"
+                    />
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Category selection */}
-            <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, marginBottom: '8px', textTransform: 'uppercase' }}>
-                Feedback Category
+            {/* Category Selector */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '6px' }}>
+                CATEGORY:
               </label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value as FeedbackItem['category'])}
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                {['Swap', 'Liquidity', 'UI/UX', 'General'].map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setCategory(cat as FeedbackItem['category'])}
+                    className="sharp-button-outline"
+                    style={{
+                      padding: '4px 10px',
+                      fontSize: '0.78rem',
+                      backgroundColor: category === cat ? '#450C3F' : 'transparent',
+                      color: category === cat ? '#ffffff' : '#450C3F',
+                    }}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Comments Input */}
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '6px' }}>
+                YOUR COMMENTS / FEEDBACK:
+              </label>
+              <textarea
+                rows={4}
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="Tell us what you liked or what can be improved..."
+                required
                 style={{
                   width: '100%',
                   padding: '10px',
                   border: '2px solid #450C3F',
-                  fontFamily: 'var(--font-main)',
-                  fontWeight: 700,
-                  fontSize: '0.95rem',
-                  backgroundColor: '#FCECD8',
-                  color: '#450C3F',
-                }}
-              >
-                <option value="Swap">Token Swaps & Execution</option>
-                <option value="Liquidity">Liquidity Pool & APY</option>
-                <option value="UI/UX">Design, UI & Navigation</option>
-                <option value="General">General Platform Experience</option>
-                <option value="Bug Report">Bug Report / Issue</option>
-              </select>
-            </div>
-
-            {/* Review Comment Text Area */}
-            <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, marginBottom: '8px', textTransform: 'uppercase' }}>
-                Your Review & Comments
-              </label>
-              <textarea
-                required
-                rows={4}
-                placeholder="Share your thoughts about KaySwap..."
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  border: '2px solid #450C3F',
-                  fontFamily: 'var(--font-main)',
-                  fontSize: '0.95rem',
-                  backgroundColor: '#ffffff',
-                  color: '#450C3F',
+                  fontFamily: 'inherit',
+                  fontSize: '0.88rem',
                   resize: 'vertical',
                 }}
               />
             </div>
 
+            {/* Submit CTA */}
             <button
               type="submit"
-              className="sharp-button-secondary"
-              style={{ width: '100%', justifyContent: 'center', marginTop: '8px' }}
+              className="sharp-button-primary"
+              style={{ width: '100%', gap: '8px' }}
             >
-              <Send size={18} />
-              <span>SUBMIT REVIEW</span>
+              <Send size={16} />
+              <span>SUBMIT FEEDBACK</span>
             </button>
           </form>
         )}

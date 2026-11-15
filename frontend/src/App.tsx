@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Home, ArrowLeftRight, Layers, Coins, ExternalLink, Star, ShieldCheck } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Home, ArrowLeftRight, Layers, Coins, ExternalLink, Star, ShieldCheck, Wallet } from 'lucide-react';
 import { useAccount } from 'wagmi';
 import { useSiwe } from './hooks/useSiwe';
 import { useKaySwap } from './hooks/useKaySwap';
@@ -9,6 +9,7 @@ import { SIWEBanner } from './components/SIWEBanner';
 import { LandingPage } from './components/LandingPage';
 import { SwapCard } from './components/SwapCard';
 import { LiquidityCard } from './components/LiquidityCard';
+import { PortfolioCard } from './components/PortfolioCard';
 import { TokenomicsCard } from './components/TokenomicsCard';
 import { TransactionModal } from './components/TransactionModal';
 import { LoaderCard } from './components/LoaderCard';
@@ -17,20 +18,31 @@ import { AdminFeedbackModal } from './components/AdminFeedbackModal';
 import { KAVYA_TOKEN_ADDRESS, KAYSWAP_AMM_ADDRESS } from './config/contracts';
 
 export function App() {
-  const [activeNav, setActiveNav] = useState<'home' | 'swap' | 'liquidity' | 'tokenomics'>('home');
+  const [activeNav, setActiveNav] = useState<'home' | 'swap' | 'liquidity' | 'portfolio' | 'tokenomics'>('home');
   const [isAdminModalOpen, setIsAdminModalOpen] = useState<boolean>(false);
   const [isManualFeedbackModalOpen, setIsManualFeedbackModalOpen] = useState<boolean>(false);
 
   const { isConnected } = useAccount();
   const { isAuthenticated, isSessionExpired, signIn, isSigning } = useSiwe();
 
+  // Feedback hook passed kavOwner for strict deployer verification
+  const [kavOwnerAddress, setKavOwnerAddress] = useState<string>('');
+  const feedback = useFeedback(kavOwnerAddress);
+
   // KaySwap hook with post-first-swap callback
   const kaySwap = useKaySwap((txHash) => {
-    feedback.checkFirstSwapTrigger(txHash);
+    // Give user 1.5s to view success checkmark on Swap, then close loader and prompt for feedback review
+    setTimeout(() => {
+      kaySwap.setIsLoaderOpen(false);
+      feedback.checkFirstSwapTrigger(txHash);
+    }, 1500);
   });
 
-  // Feedback hook passed kavOwner for strict deployer verification
-  const feedback = useFeedback(kaySwap.kavOwner);
+  useEffect(() => {
+    if (kaySwap.kavOwner && kaySwap.kavOwner !== kavOwnerAddress) {
+      setKavOwnerAddress(kaySwap.kavOwner);
+    }
+  }, [kaySwap.kavOwner, kavOwnerAddress]);
 
   const pendingCount = kaySwap.transactions.filter((tx) => tx.status === 'pending').length;
 
@@ -60,8 +72,21 @@ export function App() {
         isSigning={isSigning}
       />
 
-      {/* Main Navigation Tabs */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginBottom: '32px', flexWrap: 'wrap' }}>
+      {/* Main Navigation Tabs - Single Horizontal Line */}
+      <div
+        className="no-scrollbar"
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '8px',
+          marginBottom: '32px',
+          flexWrap: 'nowrap',
+          overflowX: 'auto',
+          width: '100%',
+          paddingBottom: '4px',
+        }}
+      >
         <button
           className={`sharp-tab ${activeNav === 'home' ? 'active' : ''}`}
           onClick={() => setActiveNav('home')}
@@ -83,7 +108,15 @@ export function App() {
           onClick={() => setActiveNav('liquidity')}
         >
           <Layers size={18} />
-          <span>LIQUIDITY POOL</span>
+          <span>LIQUIDITY POOLS</span>
+        </button>
+
+        <button
+          className={`sharp-tab ${activeNav === 'portfolio' ? 'active' : ''}`}
+          onClick={() => setActiveNav('portfolio')}
+        >
+          <Wallet size={18} />
+          <span>PORTFOLIO & ANALYTICS</span>
         </button>
 
         <button
@@ -120,6 +153,10 @@ export function App() {
 
         {activeNav === 'liquidity' && (
           <LiquidityCard kaySwap={kaySwap} isAuthenticated={isAuthenticated} />
+        )}
+
+        {activeNav === 'portfolio' && (
+          <PortfolioCard kaySwap={kaySwap} isAuthenticated={isAuthenticated} />
         )}
 
         {activeNav === 'tokenomics' && (
@@ -184,7 +221,7 @@ export function App() {
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-          gap: '16px'
+          gap: '16px',
         }}
       >
         <div>
@@ -206,7 +243,7 @@ export function App() {
               fontSize: '0.8rem',
               display: 'flex',
               alignItems: 'center',
-              gap: '4px'
+              gap: '4px',
             }}
           >
             <Star size={14} fill="#450C3F" /> Give Feedback
@@ -225,7 +262,7 @@ export function App() {
                 fontSize: '0.8rem',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '4px'
+                gap: '4px',
               }}
             >
               <ShieldCheck size={14} /> Admin Audit Logs

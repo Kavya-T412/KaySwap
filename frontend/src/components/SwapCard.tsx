@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowDownUp, Settings, RefreshCw, AlertCircle, KeyRound, ArrowRight } from 'lucide-react';
+import { ArrowDownUp, Settings, RefreshCw, AlertCircle, KeyRound, ArrowRight, Route, TrendingUp, HelpCircle } from 'lucide-react';
 import { useKaySwap } from '../hooks/useKaySwap';
 import logoImg from '../KaySwap.png';
 
@@ -16,13 +16,14 @@ export const SwapCard: React.FC<SwapCardProps> = ({
   isConnected,
   isAuthenticated,
   onSignIn,
-  isSigning
+  isSigning,
 }) => {
   const [isKavIn, setIsKavIn] = useState<boolean>(true);
   const [amountIn, setAmountIn] = useState<string>('');
   const [amountOut, setAmountOut] = useState<string>('0');
   const [slippage, setSlippage] = useState<string>('0.5'); // 0.5%
   const [showSettings, setShowSettings] = useState<boolean>(false);
+  const [isInvertedRate, setIsInvertedRate] = useState<boolean>(false);
 
   // Recalculate output quote when input changes
   useEffect(() => {
@@ -83,12 +84,31 @@ export const SwapCard: React.FC<SwapCardProps> = ({
     const resKav = parseFloat(kaySwap.reserveKav);
     const resEth = parseFloat(kaySwap.reserveEth);
     if (resKav <= 0 || resEth <= 0) return 'No Pool Liquidity';
-    const rate = (resKav / resEth).toFixed(2);
-    return `1 ETH ≈ ${rate} KAV`;
+
+    if (isInvertedRate) {
+      const rate = (resEth / resKav).toFixed(6);
+      return `1 KAV ≈ ${rate} ETH`;
+    } else {
+      const rate = (resKav / resEth).toFixed(2);
+      return `1 ETH ≈ ${rate} KAV`;
+    }
+  };
+
+  const impactStats = kaySwap.calculatePriceImpact(amountIn, isKavIn);
+
+  const getImpactBadge = () => {
+    const impact = impactStats.priceImpactPct;
+    if (impact < 1.0) {
+      return { text: `${impact}% (Low Impact)`, color: '#165823', bg: '#D4EDDA' };
+    } else if (impact < 3.0) {
+      return { text: `${impact}% (Medium Impact)`, color: '#856404', bg: '#FFF3CD' };
+    } else {
+      return { text: `${impact}% (HIGH PRICE IMPACT)`, color: '#721C24', bg: '#F8D7DA' };
+    }
   };
 
   return (
-    <div className="sharp-card" style={{ maxWidth: '480px', margin: '0 auto' }}>
+    <div className="sharp-card" style={{ maxWidth: '520px', margin: '0 auto' }}>
       {/* Header & Settings */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
         <h2 style={{ fontSize: '1.4rem', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>
@@ -109,7 +129,7 @@ export const SwapCard: React.FC<SwapCardProps> = ({
             style={{
               padding: '6px 10px',
               backgroundColor: showSettings ? '#450C3F' : 'transparent',
-              color: showSettings ? '#ffffff' : '#450C3F'
+              color: showSettings ? '#ffffff' : '#450C3F',
             }}
           >
             <Settings size={16} />
@@ -127,13 +147,13 @@ export const SwapCard: React.FC<SwapCardProps> = ({
           style={{
             backgroundColor: '#FCECD8',
             marginBottom: '20px',
-            border: '2px solid #450C3F'
+            border: '2px solid #450C3F',
           }}
         >
           <div style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '8px', textTransform: 'uppercase' }}>
-            Slippage Tolerance
+            Slippage Tolerance Protection
           </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
             {['0.1', '0.5', '1.0'].map((val) => (
               <button
                 key={val}
@@ -145,7 +165,7 @@ export const SwapCard: React.FC<SwapCardProps> = ({
                   fontSize: '0.8rem',
                   backgroundColor: slippage === val ? '#165823' : 'transparent',
                   color: slippage === val ? '#ffffff' : '#450C3F',
-                  borderColor: '#450C3F'
+                  borderColor: '#450C3F',
                 }}
               >
                 {val}%
@@ -157,15 +177,18 @@ export const SwapCard: React.FC<SwapCardProps> = ({
               value={slippage}
               onChange={(e) => setSlippage(e.target.value)}
               style={{
-                width: '70px',
+                width: '80px',
                 padding: '6px',
                 border: '2px solid #450C3F',
                 fontFamily: 'var(--font-mono)',
                 fontSize: '0.8rem',
                 fontWeight: 700,
-                textAlign: 'center'
+                textAlign: 'center',
               }}
             />
+          </div>
+          <div style={{ fontSize: '0.75rem', color: '#555' }}>
+            Your transaction will revert if the price changes unfavorably by more than this percentage.
           </div>
         </div>
       )}
@@ -185,7 +208,7 @@ export const SwapCard: React.FC<SwapCardProps> = ({
                 padding: '1px 6px',
                 fontSize: '0.7rem',
                 fontWeight: 800,
-                cursor: 'pointer'
+                cursor: 'pointer',
               }}
             >
               MAX
@@ -224,7 +247,7 @@ export const SwapCard: React.FC<SwapCardProps> = ({
             backgroundColor: '#ffffff',
             border: '2px solid #450C3F',
             padding: '8px',
-            boxShadow: '2px 2px 0px #450C3F'
+            boxShadow: '2px 2px 0px #450C3F',
           }}
         >
           <ArrowDownUp size={18} />
@@ -261,34 +284,90 @@ export const SwapCard: React.FC<SwapCardProps> = ({
         </div>
       </div>
 
-      {/* Quote Details */}
+      {/* Quote & Trade Details */}
       {parseFloat(amountIn) > 0 && (
         <div
           className="sharp-card-sm"
           style={{
             backgroundColor: '#FCECD8',
             marginBottom: '20px',
-            fontSize: '0.8rem',
+            fontSize: '0.82rem',
             display: 'flex',
             flexDirection: 'column',
-            gap: '6px'
+            gap: '8px',
+            border: '2px solid #450C3F',
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>Exchange Rate:</span>
-            <span className="mono" style={{ fontWeight: 700 }}>{getExchangeRate()}</span>
+          {/* Exchange Rate with Inversion Toggle */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ color: '#555', fontWeight: 600 }}>Spot Exchange Rate:</span>
+            <button
+              onClick={() => setIsInvertedRate(!isInvertedRate)}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-mono)',
+                fontWeight: 700,
+                color: '#450C3F',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: 0,
+              }}
+              title="Click to toggle rate inversion"
+            >
+              <span>{getExchangeRate()}</span>
+              <RefreshCw size={12} />
+            </button>
           </div>
+
+          {/* Price Impact Badge */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ color: '#555', fontWeight: 600 }}>Price Impact:</span>
+            <span
+              style={{
+                backgroundColor: getImpactBadge().bg,
+                color: getImpactBadge().color,
+                padding: '2px 8px',
+                fontWeight: 800,
+                fontSize: '0.78rem',
+                border: '1px solid #450C3F',
+                fontFamily: 'var(--font-mono)',
+              }}
+            >
+              {getImpactBadge().text}
+            </span>
+          </div>
+
+          {/* Minimum Received */}
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>Minimum Received ({slippage}% slip):</span>
+            <span style={{ color: '#555', fontWeight: 600 }}>Minimum Received ({slippage}% slip):</span>
             <span className="mono" style={{ fontWeight: 700, color: '#165823' }}>
               {calculateMinOut()} {isKavIn ? 'ETH' : 'KAV'}
             </span>
           </div>
+
+          {/* AMM LP Fee Breakdown */}
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>AMM Liquidity Fee (0.3%):</span>
+            <span style={{ color: '#555', fontWeight: 600 }}>AMM Protocol Fee (0.30%):</span>
             <span className="mono" style={{ fontWeight: 700 }}>
               {(parseFloat(amountIn) * 0.003).toFixed(4)} {isKavIn ? 'KAV' : 'ETH'}
             </span>
+          </div>
+
+          {/* Route Visualizer */}
+          <div style={{ marginTop: '4px', paddingTop: '8px', borderTop: '1px dashed #450C3F', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.78rem' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 700, color: '#450C3F' }}>
+              <Route size={14} /> Optimized Route:
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700 }}>
+              <span className="sharp-badge sharp-badge-plum" style={{ fontSize: '0.7rem', padding: '2px 6px' }}>{isKavIn ? 'KAV' : 'ETH'}</span>
+              <span>&rarr;</span>
+              <span className="sharp-badge" style={{ backgroundColor: '#165823', color: '#fff', fontSize: '0.7rem', padding: '2px 6px' }}>KaySwap Pool (0.3%)</span>
+              <span>&rarr;</span>
+              <span className="sharp-badge sharp-badge-green" style={{ fontSize: '0.7rem', padding: '2px 6px' }}>{!isKavIn ? 'KAV' : 'ETH'}</span>
+            </div>
           </div>
         </div>
       )}
@@ -306,7 +385,7 @@ export const SwapCard: React.FC<SwapCardProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            border: '2px solid #450C3F'
+            border: '2px solid #450C3F',
           }}
         >
           <AlertCircle size={18} />
@@ -329,28 +408,36 @@ export const SwapCard: React.FC<SwapCardProps> = ({
           <KeyRound size={18} />
           <span>{isSigning ? 'SIGNING MESSAGE...' : 'SIGN IN WITH ETHEREUM TO SWAP'}</span>
         </button>
-      ) : !isKavApproved() ? (
-        <button
-          className="sharp-button-secondary"
-          onClick={handleApprove}
-          disabled={kaySwap.txPending}
-          style={{ width: '100%' }}
-        >
-          {kaySwap.txPending ? 'APPROVING KAV...' : 'APPROVE KAV TOKEN'}
-        </button>
       ) : (
-        <button
-          className="sharp-button-primary"
-          onClick={handleSwap}
-          disabled={kaySwap.txPending || !amountIn || parseFloat(amountIn) <= 0}
-          style={{ width: '100%' }}
-        >
-          {kaySwap.txPending
-            ? 'EXECUTING SWAP...'
-            : isKavIn
-            ? 'SWAP KAV FOR ETH'
-            : 'SWAP ETH FOR KAV'}
-        </button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
+          <button
+            className="sharp-button-primary"
+            onClick={handleSwap}
+            disabled={kaySwap.txPending || !amountIn || parseFloat(amountIn) <= 0}
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '14px 16px',
+              backgroundColor: '#165823',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.95rem', fontWeight: 800 }}>
+              {kaySwap.txPending && <RefreshCw size={16} className="spin" />}
+              <span>
+                {kaySwap.txPending
+                  ? 'PROCESSING TRANSACTION...'
+                  : isKavIn
+                  ? !isKavApproved()
+                    ? 'APPROVE & SWAP'
+                    : 'SWAP KAV FOR ETH'
+                  : 'SWAP ETH FOR KAV'}
+              </span>
+              {!kaySwap.txPending && <ArrowRight size={18} />}
+            </div>
+          </button>
+        </div>
       )}
     </div>
   );

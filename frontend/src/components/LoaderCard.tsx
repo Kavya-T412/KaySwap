@@ -183,7 +183,7 @@ export const LoaderCard: React.FC<LoaderCardProps> = ({
                         gap: '4px',
                       }}
                     >
-                      View Tx on Sepolia Etherscan <ExternalLink size={12} />
+                      View on Sepolia Etherscan <ExternalLink size={12} />
                     </a>
                   </div>
                 )}

@@ -17,7 +17,7 @@ import {
 import logoImg from '../KaySwap.png';
 
 interface LandingPageProps {
-  onNavigateTab: (tab: 'swap' | 'liquidity' | 'tokenomics') => void;
+  onNavigateTab: (tab: 'swap' | 'liquidity' | 'portfolio' | 'tokenomics') => void;
   onOpenFeedback: () => void;
   onOpenAdmin: () => void;
   averageRating: string;

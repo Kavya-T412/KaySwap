@@ -8,20 +8,21 @@ export interface SiweSession {
   expiresAt: number;
 }
 
-const STORAGE_KEY = 'kayswap_siwe_session';
+// In-Memory Session Cache (Zero localStorage)
+const sessionCache = new Map<string, SiweSession>();
 export const SESSION_DURATION_MS = 15 * 60 * 1000; // 15 Minutes SIWE session expiry
 
 export function getStoredSession(address?: string, chainId?: number): { session: SiweSession | null; wasExpired: boolean } {
   if (!address) return { session: null, wasExpired: false };
   try {
-    const raw = localStorage.getItem(STORAGE_KEY + '_' + address.toLowerCase());
-    if (!raw) return { session: null, wasExpired: false };
-    const session: SiweSession = JSON.parse(raw);
+    const session = sessionCache.get(address.toLowerCase());
+    if (!session) return { session: null, wasExpired: false };
     if (
       session.address.toLowerCase() === address.toLowerCase() &&
       (!chainId || session.chainId === chainId)
     ) {
       if (Date.now() >= session.expiresAt) {
+        sessionCache.delete(address.toLowerCase());
         return { session: null, wasExpired: true };
       }
       return { session, wasExpired: false };
@@ -33,14 +34,14 @@ export function getStoredSession(address?: string, chainId?: number): { session:
 }
 
 export function saveSession(session: SiweSession): void {
-  localStorage.setItem(STORAGE_KEY + '_' + session.address.toLowerCase(), JSON.stringify(session));
+  sessionCache.set(session.address.toLowerCase(), session);
 }
 
 export function clearSession(address?: string): void {
   if (address) {
-    localStorage.removeItem(STORAGE_KEY + '_' + address.toLowerCase());
+    sessionCache.delete(address.toLowerCase());
   } else {
-    localStorage.removeItem(STORAGE_KEY);
+    sessionCache.clear();
   }
 }
 

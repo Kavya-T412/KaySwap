@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAccount } from 'wagmi';
 import { FeedbackItem } from '../types/feedback';
-
-const FEEDBACK_STORAGE_KEY = 'kayswap_feedbacks';
+import { reviewDB } from '../services/db';
 
 export function useFeedback(kavOwner?: string) {
   const { address } = useAccount();
@@ -16,13 +15,12 @@ export function useFeedback(kavOwner?: string) {
     address && kavOwner && address.toLowerCase() === kavOwner.toLowerCase()
   );
 
-  // Load stored feedbacks
-  const loadFeedbacks = useCallback(() => {
+  // Load stored feedbacks from PostgreSQL database
+  const loadFeedbacks = useCallback(async () => {
     try {
-      const stored = localStorage.getItem(FEEDBACK_STORAGE_KEY);
-      if (stored) {
-        setFeedbacks(JSON.parse(stored));
-      } else {
+      let storedReviews = await reviewDB.getAllReviews();
+
+      if (!storedReviews || storedReviews.length === 0) {
         const initialDefault: FeedbackItem[] = [
           {
             id: 'sample_1',
@@ -33,11 +31,12 @@ export function useFeedback(kavOwner?: string) {
             timestamp: Date.now() - 86400000,
           },
         ];
-        localStorage.setItem(FEEDBACK_STORAGE_KEY, JSON.stringify(initialDefault));
-        setFeedbacks(initialDefault);
+        await reviewDB.saveReview(initialDefault[0]);
+        storedReviews = initialDefault;
       }
+      setFeedbacks(storedReviews);
     } catch (e) {
-      console.error('Failed to load feedback from storage', e);
+      console.error('Failed to load feedback from DB', e);
     }
   }, []);
 
@@ -45,14 +44,14 @@ export function useFeedback(kavOwner?: string) {
     loadFeedbacks();
   }, [loadFeedbacks]);
 
-  // Submit feedback
-  const submitFeedback = (
+  // Submit feedback into PostgreSQL database
+  const submitFeedback = async (
     rating: number,
     comment: string,
     category: FeedbackItem['category'] = 'General',
     swapTxHash?: string,
     isFirstSwap: boolean = false
-  ): boolean => {
+  ): Promise<boolean> => {
     if (!comment.trim() || rating < 1) return false;
 
     const newItem: FeedbackItem = {
@@ -66,38 +65,52 @@ export function useFeedback(kavOwner?: string) {
       isFirstSwapFeedback: isFirstSwap,
     };
 
-    const updated = [newItem, ...feedbacks];
-    setFeedbacks(updated);
-    try {
-      localStorage.setItem(FEEDBACK_STORAGE_KEY, JSON.stringify(updated));
-      if (address && isFirstSwap) {
-        localStorage.setItem(`kayswap_feedback_given_${address.toLowerCase()}`, 'true');
-      }
-    } catch (e) {
-      console.error('Failed to save feedback', e);
+    const saved = await reviewDB.saveReview(newItem);
+    if (saved) {
+      const updated = [newItem, ...feedbacks];
+      setFeedbacks(updated);
+      return true;
     }
-    return true;
+    return false;
   };
 
   // Check if first swap feedback modal should be triggered
-  const checkFirstSwapTrigger = (txHash?: string) => {
-    if (!address) return;
-    const keyHasSwapped = `kayswap_has_swapped_${address.toLowerCase()}`;
-    const keyGivenFeedback = `kayswap_feedback_given_${address.toLowerCase()}`;
+  const checkFirstSwapTrigger = async (txHash?: string) => {
+    const userAddr = address || '';
+    try {
+      const latest = await reviewDB.getAllReviews();
+      setFeedbacks(latest);
+      const hasReviewed = latest.some(
+        (f) =>
+          Boolean(userAddr) &&
+          Boolean(f.address) &&
+          f.address.toLowerCase() === userAddr.toLowerCase() &&
+          Boolean(f.isFirstSwapFeedback)
+      );
 
-    const alreadySwapped = localStorage.getItem(keyHasSwapped);
-    const feedbackGiven = localStorage.getItem(keyGivenFeedback);
+      if (!hasReviewed) {
+        setLatestSwapHash(txHash);
+        setIsFirstSwapModalOpen(true);
+      }
+    } catch {
+      const hasReviewed = feedbacks.some(
+        (f) =>
+          Boolean(userAddr) &&
+          Boolean(f.address) &&
+          f.address.toLowerCase() === userAddr.toLowerCase() &&
+          Boolean(f.isFirstSwapFeedback)
+      );
 
-    if (!alreadySwapped && !feedbackGiven) {
-      localStorage.setItem(keyHasSwapped, 'true');
-      setLatestSwapHash(txHash);
-      setIsFirstSwapModalOpen(true);
+      if (!hasReviewed) {
+        setLatestSwapHash(txHash);
+        setIsFirstSwapModalOpen(true);
+      }
     }
   };
 
-  const clearAllFeedbacks = () => {
+  const clearAllFeedbacks = async () => {
+    await reviewDB.clearAllReviews();
     setFeedbacks([]);
-    localStorage.removeItem(FEEDBACK_STORAGE_KEY);
   };
 
   // Compute stats
