@@ -8,10 +8,18 @@ import App from './App';
 import './index.css';
 
 // RainbowKit & Wagmi Configuration - Sepolia Only
+const originUrl = typeof window !== 'undefined' && window.location.origin
+  ? window.location.origin
+  : 'https://kayswapp.netlify.app';
+
 const config = getDefaultConfig({
   appName: 'KaySwap DEX',
-  projectId: '5c499eda8e4b1a80534ed01c77f121dd', // Standard demo Project ID for RainbowKit
+  appDescription: 'KaySwap Decentralized AMM & Swap Protocol on Sepolia',
+  appUrl: originUrl,
+  appIcon: `${originUrl}/KaySwap.png`,
+  projectId: '5c499eda8e4b1a80534ed01c77f121dd', // Demo WalletConnect Project ID
   chains: [sepolia],
+  ssr: false,
 });
 
 const queryClient = new QueryClient();

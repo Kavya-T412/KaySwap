@@ -7,7 +7,32 @@
 
 import { FeedbackItem } from '../types/feedback';
 
-const API_BASE = '/api';
+/**
+ * Resolve candidate backend URLs.
+ * In order of priority:
+ * 1. User-configured VITE_API_URL environment variable
+ * 2. Current origin /api (direct host or Netlify rewrite proxy)
+ * 3. Dedicated Render backend URL (cross-origin fallback)
+ */
+const getCandidateApiUrls = (): string[] => {
+  const urls: string[] = [];
+
+  const envUrl = (import.meta as any).env?.VITE_API_URL;
+  if (envUrl && typeof envUrl === 'string' && envUrl.trim().length > 0) {
+    const cleaned = envUrl.trim().replace(/\/$/, '');
+    urls.push(cleaned.endsWith('/api') ? cleaned : `${cleaned}/api`);
+  }
+
+  // Same-origin relative path (works on Render direct fullstack host or via Netlify proxy)
+  urls.push('/api');
+
+  // Dedicated Render deployment fallback for static hosts (e.g. Netlify)
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+    urls.push('https://kayswap.onrender.com/api');
+  }
+
+  return Array.from(new Set(urls));
+};
 
 // In-Memory Fallback Cache for seamless instant rendering
 let memoryFeedbacks: FeedbackItem[] = [];
@@ -17,19 +42,27 @@ class ApiDatabaseService {
    * Fetch all user feedback reviews from PostgreSQL database
    */
   async getAllFeedbacks(): Promise<FeedbackItem[]> {
-    try {
-      const res = await fetch(`${API_BASE}/feedbacks`, {
-        headers: { Accept: 'application/json' },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          memoryFeedbacks = data;
-          return data;
+    const candidates = getCandidateApiUrls();
+
+    for (const base of candidates) {
+      try {
+        const res = await fetch(`${base}/feedbacks`, {
+          headers: { Accept: 'application/json' },
+        });
+
+        if (res.ok) {
+          const contentType = res.headers.get('content-type') || '';
+          if (contentType.includes('application/json')) {
+            const data = await res.json();
+            if (Array.isArray(data) && data.length > 0) {
+              memoryFeedbacks = data;
+              return data;
+            }
+          }
         }
+      } catch {
+        // Try next candidate
       }
-    } catch {
-      // In-memory fallback
     }
 
     if (memoryFeedbacks.length === 0) {
@@ -55,17 +88,28 @@ class ApiDatabaseService {
    */
   async saveFeedback(item: FeedbackItem): Promise<boolean> {
     memoryFeedbacks = [item, ...memoryFeedbacks.filter((f) => f.id !== item.id)];
+    const candidates = getCandidateApiUrls();
 
-    try {
-      const res = await fetch(`${API_BASE}/feedbacks`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(item),
-      });
-      return res.ok;
-    } catch {
-      return false;
+    for (const base of candidates) {
+      try {
+        const res = await fetch(`${base}/feedbacks`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify(item),
+        });
+
+        if (res.ok) {
+          return true;
+        }
+      } catch {
+        // Try next candidate
+      }
     }
+
+    return false;
   }
 
   /**
@@ -73,14 +117,24 @@ class ApiDatabaseService {
    */
   async clearAllFeedbacks(): Promise<boolean> {
     memoryFeedbacks = [];
-    try {
-      const res = await fetch(`${API_BASE}/feedbacks`, {
-        method: 'DELETE',
-      });
-      return res.ok;
-    } catch {
-      return false;
+    const candidates = getCandidateApiUrls();
+
+    for (const base of candidates) {
+      try {
+        const res = await fetch(`${base}/feedbacks`, {
+          method: 'DELETE',
+          headers: { Accept: 'application/json' },
+        });
+
+        if (res.ok) {
+          return true;
+        }
+      } catch {
+        // Try next candidate
+      }
     }
+
+    return false;
   }
 }
 

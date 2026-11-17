@@ -2,13 +2,13 @@ export const KAVYA_TOKEN_ADDRESS = "0x89C74d54EF808F31e2420070f2c18D1b30a13781";
 export const KAYSWAP_AMM_ADDRESS = "0xBFe195290F79Ac9E8aD1b61C6923b37c2a478488";
 export const KAYSWAP_LP_NFT_ADDRESS = "0xA0Ead7c83FB9192dc6efC179b181A0019B1AC236"; // LP Certificate NFT on Sepolia
 
-// Alchemy / Public RPC Endpoints for Sepolia On-Chain Event Fetching
-export const ALCHEMY_RPC_URL = "https://eth-sepolia.g.alchemy.com/v2/mgjGE8uVlKCzeoa_1AACn";
+// Public RPC Endpoints for Sepolia On-Chain Event Fetching
+export const ALCHEMY_RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com";
 export const SEPOLIA_RPC_FALLBACKS = [
-  "https://eth-sepolia.g.alchemy.com/v2/demo",
   "https://ethereum-sepolia-rpc.publicnode.com",
-  "https://rpc.ankr.com/eth_sepolia",
-  "https://1rpc.io/sepolia"
+  "https://1rpc.io/sepolia",
+  "https://rpc2.sepolia.org",
+  "https://rpc.ankr.com/eth_sepolia"
 ];
 
 export const KAVYA_TOKEN_ABI = [

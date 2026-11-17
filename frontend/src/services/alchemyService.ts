@@ -10,19 +10,18 @@ export interface RealGraphPoint {
 
 export class AlchemyService {
   private provider: JsonRpcProvider | null = null;
+  private currentRpcIndex: number = 0;
 
   constructor() {
     this.initProvider();
   }
 
   private initProvider() {
-    for (const url of SEPOLIA_RPC_FALLBACKS) {
-      try {
-        this.provider = new JsonRpcProvider(url, 11155111);
-        break;
-      } catch (e) {
-        console.warn(`RPC init failed for ${url}`);
-      }
+    const url = SEPOLIA_RPC_FALLBACKS[this.currentRpcIndex] || SEPOLIA_RPC_FALLBACKS[0];
+    try {
+      this.provider = new JsonRpcProvider(url, 11155111);
+    } catch {
+      this.provider = new JsonRpcProvider('https://ethereum-sepolia-rpc.publicnode.com', 11155111);
     }
   }
 
@@ -34,7 +33,7 @@ export class AlchemyService {
   }
 
   /**
-   * Fetch all real on-chain transaction history for a wallet address from block 0
+   * Fetch all real on-chain transaction history for a wallet address
    */
   async fetchUserOnChainActivity(userAddress?: string): Promise<{
     transactions: TransactionItem[];
@@ -50,7 +49,10 @@ export class AlchemyService {
       const kavInterface = new Interface(KAVYA_TOKEN_ABI);
 
       const currentBlock = await provider.getBlockNumber().catch(() => 0);
-      const startBlock = Math.max(0, currentBlock - 50000); // Last 50k blocks or contract deployment
+      if (!currentBlock) return defaultRes;
+
+      // Query within safe public RPC block limit (last ~9,000 blocks to prevent range errors)
+      const startBlock = Math.max(0, currentBlock - 9000);
 
       const [ammLogs, kavLogs] = await Promise.all([
         provider.getLogs({
@@ -67,6 +69,23 @@ export class AlchemyService {
 
       const parsedTxs: TransactionItem[] = [];
       const poolsMap = new Map<string, PoolItem>();
+      const blockTimestampCache = new Map<number, number>();
+
+      const getBlockTime = async (blockNumber: number): Promise<number> => {
+        if (blockTimestampCache.has(blockNumber)) {
+          return blockTimestampCache.get(blockNumber)!;
+        }
+        try {
+          const b = await provider.getBlock(blockNumber).catch(() => null);
+          const t = b ? b.timestamp * 1000 : Date.now();
+          blockTimestampCache.set(blockNumber, t);
+          return t;
+        } catch {
+          const t = Date.now();
+          blockTimestampCache.set(blockNumber, t);
+          return t;
+        }
+      };
 
       // Parse AMM contract event logs
       for (const log of ammLogs) {
@@ -74,8 +93,7 @@ export class AlchemyService {
           const parsed = ammInterface.parseLog({ topics: log.topics as string[], data: log.data });
           if (!parsed) continue;
 
-          const block = await provider.getBlock(log.blockNumber).catch(() => null);
-          const timestamp = block ? block.timestamp * 1000 : Date.now();
+          const timestamp = await getBlockTime(log.blockNumber);
 
           if (parsed.name === 'SwapExecuted') {
             const { sender, tokenIn, amountIn, tokenOut, amountOut } = parsed.args;
@@ -176,8 +194,7 @@ export class AlchemyService {
           const parsed = kavInterface.parseLog({ topics: log.topics as string[], data: log.data });
           if (!parsed) continue;
 
-          const block = await provider.getBlock(log.blockNumber).catch(() => null);
-          const timestamp = block ? block.timestamp * 1000 : Date.now();
+          const timestamp = await getBlockTime(log.blockNumber);
 
           if (parsed.name === 'Transfer') {
             const { from, to, value } = parsed.args;

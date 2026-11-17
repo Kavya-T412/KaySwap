@@ -21,7 +21,7 @@ export function useFeedback(kavOwner?: string) {
       let storedReviews = await reviewDB.getAllReviews();
 
       if (!storedReviews || storedReviews.length === 0) {
-        const initialDefault: FeedbackItem[] = [
+        storedReviews = [
           {
             id: 'sample_1',
             address: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
@@ -31,8 +31,6 @@ export function useFeedback(kavOwner?: string) {
             timestamp: Date.now() - 86400000,
           },
         ];
-        await reviewDB.saveReview(initialDefault[0]);
-        storedReviews = initialDefault;
       }
       setFeedbacks(storedReviews);
     } catch (e) {
